@@ -1,4 +1,15 @@
 # AndroidLearnings
+
+Flows
+1. // Flow is like a  stream of data flowing through a pipe.
+   // it can be of 2 ways (hot which is active everytime or cold which works only when collected)
+   // flow is very best when working with complex async coroutines calls
+   // can use functions such as filter , map or many other functions to play with data
+   // cold flows also help in saving memory as they only work when collected
+   // flow is not lifecycle aware
+2. flow has producer(emits the data using emit()) , intermediaries(optional , vcan modify the emitted data) and consumer (collect() to get flow output)
+3. 
+
 Coroutines
 1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
 
