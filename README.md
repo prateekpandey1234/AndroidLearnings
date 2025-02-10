@@ -1,4 +1,25 @@
 # AndroidLearnings
+Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
+1. Used in place of collections when data is in millions of order .
+2. sequence are lazy evaluters , that means they process each item one by one and avoid creation of temproray collection(list,map etc) for any operations.
+3. these have two functions : intermediate and terminal
+4. intermediate will process one object and give to terminal function to add it to result , intermediate functions don't create or use temp collection
+5. this saves whole memory in process but hard to implement and complexes code
+6. val list = (1..1_000_000).toList()
+   // Creates 3 intermediate lists!
+   val result = list
+       .filter { it % 2 == 0 }   // Intermediate list 1
+       .map { it * 2 }           // Intermediate list 2
+       .take(10)                 // Intermediate list 3
+       .toList()
+
+   val sequence = (1..1_000_000).asSequence()
+   // Processes elements one by one, no intermediate lists!
+   val result = sequence
+       .filter { it % 2 == 0 }  // Intermediate
+       .map { it * 2 }          // Intermediate
+       .take(10)                // Intermediate
+       .toList()                // Terminal
 
 Flows
 1. // Flow is like a  stream of data flowing through a pipe.
