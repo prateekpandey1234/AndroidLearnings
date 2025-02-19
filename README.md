@@ -20,7 +20,10 @@ Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
        .map { it * 2 }          // Intermediate
        .take(10)                // Intermediate
        .toList()                // Terminal
-
+Side Effects
+1. LaunchedEffects is triggered evey time when value of it's is changed and utilises coroutinescope to run any IO operatons
+2. Disposable effect is like launchedeffect except for coroutinescope and is it moslty used to handle handle lifecyle events , onDispose is must
+   as it is called whenever the key leave recompostion 
 Flows
 1. // Flow is like a  stream of data flowing through a pipe.
    // it can be of 2 ways (hot which is active everytime or cold which works only when collected)
@@ -38,6 +41,9 @@ ViewModel
 1. use job{ ViewmodelScope.launch()} , to cancel any type of long running jobs running in the background like fetching and processing data
    https://medium.com/@paritasampa95/coroutinescope-coroutinecontext-discussed-in-depth-to-understand-better-part-2-550dbc7af3d2
 2. https://x.com/nagataro_san475/status/1875593012648276202
+3.  private val _isLoading  = MutableLiveData<Boolean>()
+    val isLoading  :LiveData<Boolean> = _isLoading
+   this allows immutablitiy of isLoading by outer access , only edited inside the viewModel even when _isLoading is mutable
 
 
 
