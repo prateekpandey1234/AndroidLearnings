@@ -37,6 +37,7 @@ Flows
 Coroutines
 1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
 
+
 ViewModel
 1. use job{ ViewmodelScope.launch()} , to cancel any type of long running jobs running in the background like fetching and processing data
    https://medium.com/@paritasampa95/coroutinescope-coroutinecontext-discussed-in-depth-to-understand-better-part-2-550dbc7af3d2
@@ -63,3 +64,11 @@ DataBase
  *   get list of children at once
  * * Here we don't require that because same data class is used , we can just run queries simply for both way mapping
  */
+
+
+Testing
+1.  to test suspend functions using runTest{} to run coroutine functions , this allows to skip any time delay there is in suspend function
+2.  runTest makes a TestScope which is similar to CoroutineScope for a coroutine , default dispatcher for runTest is StandardTestDispatcher
+3.  use advanceUntilIdle() to make sure all coroutines work and free the test coroutines
+ a. if we are starting new coroutines from top level testing coroutines then we need to use TestingDispatchers to schedule the new coroutines
+ b. also when switching to different dispatcher using withContext , we need
