@@ -72,3 +72,34 @@ Testing
 3.  use advanceUntilIdle() to make sure all coroutines work and free the test coroutines
  a. if we are starting new coroutines from top level testing coroutines then we need to use TestingDispatchers to schedule the new coroutines
  b. also when switching to different dispatcher using withContext , we need
+4.
+ there are 3 tests - ui(requires user input) , unit (no need of emulator and ui , ex:- db functions , api calls ) and integration ( normal view stuff which doesn't requires user input
+                                                                      but still needs emulator)
+
+ No 1 theory of TDD best practice is
+
+“Write test cases before the function implementation”
+
+These are steps to follow
+
+Write your function signature
+Write test case for what that function is going to do and what you expect from it .
+Write function logic so test case passes.
+This procedure is carefully followed when writing unit tests and recommended for Integration and UI testing as well.
+
+
+Robolectric.setupActivity. You write a test case where you call MyActivity.onCreate to check that some preinitialisation is done when called. This test case will fail at super.onCreate call which is forced by android system.
+
+Mock will not help because you don't use a member variable which could be mocked.
+
+A Stub will not help because of the inheritance you can stub the onCreate method for you activity which makes testing pointless.
+
+You miss Spy but this will also not help because of the inheritance. With Spy can avoid the real onCreate call like stubbing but makes testing also pointless.
+
+The Shadow can help at this situation. This handles more like a proxy. There can be an explicit proxy for each inherited class.
+ It can intercept each type of method call also for static methods. For you example we can create a proxy
+ for the android.app.Activity which will shadow the onCreate method and instead of throwing exceptions it
+ will do nothing... There you can save this event so you can later check that this super.method was called
+ with expected arguments if necessary
+
+ https://proandroiddev.com/understanding-the-role-of-mocks-and-spies-in-unit-testing-66e23b0e330b
