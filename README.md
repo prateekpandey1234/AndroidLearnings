@@ -32,7 +32,8 @@ Flows
    // cold flows also help in saving memory as they only work when collected
    // flow is not lifecycle aware
 2. flow has producer(emits the data using emit()) , intermediaries(optional , vcan modify the emitted data) and consumer (collect() to get flow output)
-3. 
+3. flow work only when you want to receive data  On the other hand, Kotlin Flow is suitable for handling asynchronous operations that produce multiple values over time. This makes it ideal for scenarios where you need to observe changes in data, such as streaming data from a network or observing changes in a database. Kotlin Flow allows you to handle streams of data asynchronously and apply operators like map, filter, and transform
+4. https://medium.com/androiddevelopers/consuming-flows-safely-in-jetpack-compose-cde014d0d5a3
 
 Coroutines
 1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
