@@ -5,6 +5,11 @@ Observers
    2. Live Data is basic state holder which obervers any change in the state of data like life cycle changes , also it is lifecycler aware
    3. State Flow is LiveData+fLOW benefits , also stores latest changes in state but can perform multiple operations like mapping or transform
      , also made up with coroutines so no need of suspend function declaration, but it is not life cycle aware so we have to collect latest state when life cycle state changes
+      issue with this is that it will only emit value once inside current lifecycle if previous and current value are same
+   5. flow is a oberver but it will only fetch data when collector is called like when button clicked you have to trigger flow.collect to get latest data , it utilises coroutines
+      , allows transformation and mapping .
+   6. Shared flow : It emits all the values and does not care about the distinct from the previous item. It emits consecutive repeated values also.
+
 Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
    1. Used in place of collections when data is in millions of order .
    2. sequence are lazy evaluters , that means they process each item one by one and avoid creation of temproray collection(list,map etc) for any operations.
@@ -26,10 +31,12 @@ Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
           .map { it * 2 }          // Intermediate
           .take(10)                // Intermediate
           .toList()                // Terminal
+
 Side Effects
    1. LaunchedEffects is triggered evey time when value of it's is changed and utilises coroutinescope to run any IO operatons
    2. Disposable effect is like launchedeffect except for coroutinescope and is it moslty used to handle handle lifecyle events , onDispose is must
       as it is called whenever the key leave recompostion
+
 Flows
    1. // Flow is like a  stream of data flowing through a pipe.
       // it can be of 2 ways (hot which is active everytime or cold which works only when collected)
