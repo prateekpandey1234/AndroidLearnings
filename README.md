@@ -1,5 +1,10 @@
 # AndroidLearnings
 
+State Hoisting in compose
+   1. there are two types of compose, statefull and stateless .
+   2. statefull compose are those who use remember tyype of delegation to observe and recompose in case of any event occurence like text change , but this makes the composable           hard to test and can cause unneccessary recompositions sometimes
+   3. stateless is the scenario when the compose is being controlled by it's caller making the compose stateless , this is also called state hoisting 
+
 Observers
    1. there are 4 types of observers : Live Data , StateFlow , Flow and SharedFlow
    2. Live Data is basic state holder which obervers any change in the state of data like life cycle changes , also it is lifecycler aware
