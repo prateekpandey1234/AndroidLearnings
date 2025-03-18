@@ -89,6 +89,9 @@ DataBase
 
 
 Testing
+remember to make a interface repo which is then used by 2 different repositories :-
+   a. first repo is used by viewmodel to make api , db calls
+   b. second repo is fale repo or kind of mock one which allows to emit or set any value we  want for testing purposes .
    1.  to test suspend functions using runTest{} to run coroutine functions , this allows to skip any time delay there is in suspend function
    2.  runTest makes a TestScope which is similar to CoroutineScope for a coroutine , default dispatcher for runTest is StandardTestDispatcher
    3.  use advanceUntilIdle() to make sure all coroutines work and free the test coroutines
