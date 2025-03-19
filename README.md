@@ -154,6 +154,10 @@ remember to make a interface repo which is then used by 2 different repositories
    a. that instrumentation testing is integration testing with the ability to control the life cycle and the events (onStart, onCreate etc) of the app.
    b. To test UI that relies on the Android framework or system, such as Activities, Services, or UI elements. Tools used: AndroidJUnitRunner, Espresso, UI Automator.
 
+4. UI Testing
+   a. createcomposeRule() a function that creates a test rule, which is used to initialize the Compose UI framework and provides utility functions for interacting with UI elements in your tests.
+   b. 
+
    
 
     
