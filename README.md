@@ -110,6 +110,7 @@ remember to make a interface repo which is then used by 2 different repositories
    
 
 1. Unit Testing
+
    a. These are steps to follow
          Write your function signature
          Write test case for what that function is going to do and what you expect from it .
@@ -134,6 +135,7 @@ remember to make a interface repo which is then used by 2 different repositories
     with expected arguments if necessary
 
 3. Instrumented Testing
+
    a. that instrumentation testing is integration testing with the ability to control the life cycle and the events (onStart, onCreate etc) of the app.
 
    
