@@ -92,18 +92,18 @@ DataBase
 
 Testing
 
-Remote DataSource Testing [Retrofit] - Mockserver | Fakes | Mocks
-Local DataSource database [Room] - Android X Test | Robolectric 
-Local DataSource Prefs [SharedPrefernces] - Android X Test | Robolectric 
-Local DataSource Store [DataSource] - Android X Test | Robolectric 
-Repository Layer | UseCases | business-logic  - JUnit 4/5 | Fakes | Mocks
-ViewModel & LiveData - Android X Test | Robolectric 
-Navigation [Navhost|Intents] - Android X Test | Robolectric 
-View & Animations [Activity|Fragments|CustomViews] - Espresso|Barista Instrumentation
-Notifications Test - Instrumentation and ADB
-Broadcast Test - Instrumentation and ADB
-Content provider - Instrumentation and ADB
-Firebase Testing(depends on things you are testing) - Espresso|Barista Instrumentation | Android X Test | Robolectric | ADB
+   1. Remote DataSource Testing [Retrofit] - Mockserver | Fakes | Mocks
+   2. Local DataSource database [Room] - Android X Test | Robolectric 
+   3. Local DataSource Prefs [SharedPrefernces] - Android X Test | Robolectric 
+   4. Local DataSource Store [DataSource] - Android X Test | Robolectric 
+   5. Repository Layer | UseCases | business-logic  - JUnit 4/5 | Fakes | Mocks
+   6. ViewModel & LiveData - Android X Test | Robolectric 
+   7. Navigation [Navhost|Intents] - Android X Test | Robolectric 
+   8. View & Animations [Activity|Fragments|CustomViews] - Espresso|Barista Instrumentation
+   9. Notifications Test - Instrumentation and ADB
+   10. Broadcast Test - Instrumentation and ADB
+   11. Content provider - Instrumentation and ADB
+   12. Firebase Testing(depends on things you are testing) - Espresso|Barista Instrumentation | Android X Test | Robolectric | ADB
 
 remember to make a interface repo which is then used by 2 different repositories :-
    a. first repo is used by viewmodel to make api , db calls
