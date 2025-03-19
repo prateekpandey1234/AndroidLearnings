@@ -92,6 +92,8 @@ DataBase
 
 Testing
 
+   https://testing.googleblog.com/2010/12/test-sizes.html
+
    1. Remote DataSource Testing [Retrofit] - Mockserver | Fakes | Mocks
    2. Local DataSource database [Room] - Android X Test | Robolectric 
    3. Local DataSource Prefs [SharedPrefernces] - Android X Test | Robolectric 
