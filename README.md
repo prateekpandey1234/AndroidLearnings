@@ -3,7 +3,9 @@
 State Hoisting in compose
    1. there are two types of compose, statefull and stateless .
    2. statefull compose are those who use remember tyype of delegation to observe and recompose in case of any event occurence like text change , but this makes the composable           hard to test and can cause unneccessary recompositions sometimes
-   3. stateless is the scenario when the compose is being controlled by it's caller making the compose stateless , this is also called state hoisting 
+   3. stateless is the scenario when the compose is being controlled by it's caller making the compose stateless , this is also called state hoisting
+   4. most of the time the collecting and emitting works on same dispatcher of current context in which flow is called , we can switch that like using flowOn which allows
+      emitting on Io thread but for collection you have to use withContext to switch dispcatcher
 
 Observers
    1. there are 4 types of observers : Live Data , StateFlow , Flow and SharedFlow
@@ -54,7 +56,7 @@ Flows
    4. https://medium.com/androiddevelopers/consuming-flows-safely-in-jetpack-compose-cde014d0d5a3
    5. https://medium.com/@devarshbhalara3072/building-efficient-api-calls-in-android-with-retrofit-coroutines-flow-and-dependency-injection-60e022b16987
    6.  always remember to add flow as an lifecycleaware component
-   7.  flow is a one timer thing doesn't hold the state or any data , if reset it will go to orginal data before changing
+   8.  flow is a one timer thing doesn't hold the state or any data , if reset it will go to orginal data before changing
 
 Coroutines
    1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
