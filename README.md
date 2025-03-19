@@ -137,6 +137,7 @@ remember to make a interface repo which is then used by 2 different repositories
 3. Instrumented Testing
 
    a. that instrumentation testing is integration testing with the ability to control the life cycle and the events (onStart, onCreate etc) of the app.
+   b. To test UI that relies on the Android framework or system, such as Activities, Services, or UI elements. Tools used: AndroidJUnitRunner, Espresso, UI Automator.
 
    
 
