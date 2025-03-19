@@ -107,26 +107,35 @@ remember to make a interface repo which is then used by 2 different repositories
    
    “Write test cases before the function implementation”
    
-   These are steps to follow
    
-   Write your function signature
-   Write test case for what that function is going to do and what you expect from it .
-   Write function logic so test case passes.
-   This procedure is carefully followed when writing unit tests and recommended for Integration and UI testing as well.
+
+1. Unit Testing
+   a. These are steps to follow
+         Write your function signature
+         Write test case for what that function is going to do and what you expect from it .
+         Write function logic so test case passes.
+         This procedure is carefully followed when writing unit tests and recommended for Integration and UI testing as well.
    
+   c. Robolectric.setupActivity. You write a test case where you call MyActivity.onCreate to check that some preinitialisation is done when called. This test case will fail at    
+   super.onCreate call which is forced by android system.
    
-   Robolectric.setupActivity. You write a test case where you call MyActivity.onCreate to check that some preinitialisation is done when called. This test case will fail at super.onCreate call which is forced by android system.
+   d. Mock will not help because you don't use a member variable which could be mocked.
    
-   Mock will not help because you don't use a member variable which could be mocked.
+   e. A Stub will not help because of the inheritance you can stub the onCreate method for you activity which makes testing pointless.
    
-   A Stub will not help because of the inheritance you can stub the onCreate method for you activity which makes testing pointless.
+   f. You miss Spy but this will also not help because of the inheritance. With Spy can avoid the real onCreate call like stubbing but makes testing also pointless.
+
+   g. https://proandroiddev.com/understanding-the-role-of-mocks-and-spies-in-unit-testing-66e23b0e330b
    
-   You miss Spy but this will also not help because of the inheritance. With Spy can avoid the real onCreate call like stubbing but makes testing also pointless.
-   
-   The Shadow can help at this situation. This handles more like a proxy. There can be an explicit proxy for each inherited class.
+   h. The Shadow can help at this situation. This handles more like a proxy. There can be an explicit proxy for each inherited class.
     It can intercept each type of method call also for static methods. For you example we can create a proxy
     for the android.app.Activity which will shadow the onCreate method and instead of throwing exceptions it
     will do nothing... There you can save this event so you can later check that this super.method was called
     with expected arguments if necessary
+
+3. Instrumented Testing
+   a. that instrumentation testing is integration testing with the ability to control the life cycle and the events (onStart, onCreate etc) of the app.
+
    
-    https://proandroiddev.com/understanding-the-role-of-mocks-and-spies-in-unit-testing-66e23b0e330b
+
+    
