@@ -156,7 +156,9 @@ remember to make a interface repo which is then used by 2 different repositories
 
 4. UI Testing
    a. createcomposeRule() a function that creates a test rule, which is used to initialize the Compose UI framework and provides utility functions for interacting with UI elements in your tests.
-   b. 
+   b. normally when tetsing a compose we can use createAndroidComposeRule() to help get acitvity context or lifecycles , it mocks the behaviour of activity itself
+   c. to test a compose you need to add testTag to the compose itself in the modifier where you are calling it , having composable as in activity .
+   d. 
 
    
 
