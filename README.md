@@ -89,7 +89,7 @@ DataBase
     * * Here we don't require that because same data class is used , we can just run queries simply for both way mapping
     */
 
-   2. remember that whenever you make changes into your schema like adding/deleting column, creating new table .. you have to migrate to newer version of db and whenever that happens make sure to tell your db class all changes on onUpgrade() callback for sql lite .
+   2. remember that whenever you make changes into your schema like adding/deleting column, creating new table .. you have to migrate to newer version of db and whenever that happens make sure to tell your db class all changes on onUpgrade() callback for sql lite . also what happens for ex user has db version 1 and both version 2, version 3 and version 4 have modified the schema by anymeans so when user updates app , first inupdate will go for version 2 then version3 and version 4 ... executing all the updates and changes said there and does not skip any migration changes .
    3. for db migration on room :-https://medium.com/androiddevelopers/understanding-migrations-with-room-f01e04b07929
    4. Why is Database Migration Necessary?
          Schema Evolution
