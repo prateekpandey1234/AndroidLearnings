@@ -91,6 +91,25 @@ DataBase
 
    2. remember that whenever you make changes into your schema like adding/deleting column, creating new table .. you have to migrate to newer version of db and whenever that happens make sure to tell your db class all changes on onUpgrade() callback for sql lite .
    3. for db migration on room :-https://medium.com/androiddevelopers/understanding-migrations-with-room-f01e04b07929
+   4. Why is Database Migration Necessary?
+         Schema Evolution
+         Apps need to update database structure as features change
+         Allow adding new tables or columns without losing existing data
+         Data Preservation
+         Migrate existing user data to new schema
+         Prevent data loss during app updates
+         Restructure database for better query performance
+         Remove deprecated columns or tables
+   5. When is onUpgrade() Called?
+         onUpgrade() is called when the database version number in your SQLiteOpenHelper changes
+         Specifically, when you increase the version number in the SQLiteOpenHelper constructor
+         This happens when you want to modify your database schema (add/remove tables, change column types)
+         
+      Where are Old and New Versions Fetched?
+         
+         Old Version: Comes from the existing database file on the user's device
+         New Version: Defined in your current code's database helper class
+         The version comparison happens automatically by the Android SQLite framework
 
 
 Testing
