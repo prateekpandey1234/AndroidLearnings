@@ -89,6 +89,9 @@ DataBase
     * * Here we don't require that because same data class is used , we can just run queries simply for both way mapping
     */
 
+   2. remember that whenever you make changes into your schema like adding/deleting column, creating new table .. you have to migrate to newer version of db and whenever that happens make sure to tell your db class all changes on onUpgrade() callback for sql lite .
+   3. for db migration on room :-https://medium.com/androiddevelopers/understanding-migrations-with-room-f01e04b07929
+
 
 Testing
 
