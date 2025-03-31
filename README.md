@@ -70,6 +70,14 @@ ViewModel
        val isLoading  :LiveData<Boolean> = _isLoading
       this allows immutablitiy of isLoading by outer access , only edited inside the viewModel even when _isLoading is mutable
 
+BroadCasts (https://medium.com/@khush.panchal123/understanding-broadcast-receivers-in-android-044fbfaa1330)
+   1. BroadCasts are kind of android system wise events which can be received by app if it has registered that event type , these events are generally network connection ,               airplane mod or sms 
+   2. there are 2 types of broadcasts we can use:-
+         a. static / manifest broadcast are those which can cause triggereing of onCreate() on application context , these are defined within the mainfest .
+         b. context/dynamic broadcast are those which can be registered based on context of activity and they have to be unregistered when in no need .
+   3. broadcast are sent / recievedin terms of intent ... these broadcasts can also be made locally for any other receiver within the app .
+   4. when receiving a broadcast to register remeber :- RECEIVER_EXPORTED flag needs to be add for custom broadcast, it indicates that other apps can send the broadcast to our             app. 
+      
 
 
 DataBase 
