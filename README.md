@@ -76,8 +76,12 @@ BroadCasts (https://medium.com/@khush.panchal123/understanding-broadcast-receive
          a. static / manifest broadcast are those which can cause triggereing of onCreate() on application context , these are defined within the mainfest .
          b. context/dynamic broadcast are those which can be registered based on context of activity and they have to be unregistered when in no need .
    3. broadcast are sent / recievedin terms of intent ... these broadcasts can also be made locally for any other receiver within the app .
-   4. when receiving a broadcast to register remeber :- RECEIVER_EXPORTED flag needs to be add for custom broadcast, it indicates that other apps can send the broadcast to our             app. 
-      
+   4. when receiving a broadcast to register remeber :- RECEIVER_EXPORTED flag needs to be add for custom broadcast, it indicates that other apps can send the broadcast to our             app.
+   5. Pending intents are used whenever you want try to recive any data or info from broadcast.(https://medium.com/@appdevinsights/pending-intent-in-android-fc93a8b6c2ac)
+   6. this a type of intent which is given to android system apis to work upon and send data back to our app , we can set whether these intent work ,
+               PendingIntent.getActivity() : Retrieve a PendingIntent to start an Activity
+               PendingIntent.getBroadcast() : Retrieve a PendingIntent to perform a Broadcast
+               PendingIntent.getService() : Retrieve a PendingIntent to start a Service
 
 
 DataBase 
