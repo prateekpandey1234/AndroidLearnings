@@ -82,6 +82,7 @@ BroadCasts (https://medium.com/@khush.panchal123/understanding-broadcast-receive
                PendingIntent.getActivity() : Retrieve a PendingIntent to start an Activity
                PendingIntent.getBroadcast() : Retrieve a PendingIntent to perform a Broadcast
                PendingIntent.getService() : Retrieve a PendingIntent to start a Service
+   7. also when registering the broadcast , mention it clearly which type of intent broadcast you need to see like IntentFilter("SMS_deliver") to detect if the intent which is           using this filter is completed or not .
 
 
 DataBase 
