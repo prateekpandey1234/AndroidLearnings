@@ -83,7 +83,7 @@ BroadCasts (https://medium.com/@khush.panchal123/understanding-broadcast-receive
                PendingIntent.getBroadcast() : Retrieve a PendingIntent to perform a Broadcast
                PendingIntent.getService() : Retrieve a PendingIntent to start a Service
    7. also when registering the broadcast , mention it clearly which type of intent broadcast you need to see like IntentFilter("SMS_deliver") to detect if the intent which is           using this filter is completed or not .
-   8. // receiver used for receiving sms response
+   8.                                 // receiver used for receiving sms response
             context.registerReceiver(object : BroadcastReceiver(){
                 override fun onReceive(p0: Context?, intent: Intent?) {
                     if (intent?.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
