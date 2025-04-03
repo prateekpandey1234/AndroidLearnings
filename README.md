@@ -70,6 +70,14 @@ ViewModel
        val isLoading  :LiveData<Boolean> = _isLoading
       this allows immutablitiy of isLoading by outer access , only edited inside the viewModel even when _isLoading is mutable
 
+Workers Android(https://medium.com/@appdevinsights/work-manager-android-6ea8daad56ee)
+   1. workers are android based api used to run tasks even when app is killed or tasks which needs to scheduled , user doesn't has any interaction during this process and 
+      ex:- data base cync , daily regular apis
+   2. there are several benefits of a workmanager :-
+         a. can make a worker periodic , add constraints like(low battery , netowrk ) , can chain workers together .
+         b. add backoff policy(time after which worker runs agiain when failing) , use automatic threading and coroutines
+     
+
 BroadCasts (https://medium.com/@khush.panchal123/understanding-broadcast-receivers-in-android-044fbfaa1330)
    1. BroadCasts are kind of android system wise events which can be received by app if it has registered that event type , these events are generally network connection ,               airplane mod or sms 
    2. there are 2 types of broadcasts we can use:-
