@@ -76,6 +76,12 @@ Workers Android(https://medium.com/@appdevinsights/work-manager-android-6ea8daad
    2. there are several benefits of a workmanager :-
          a. can make a worker periodic , add constraints like(low battery , netowrk ) , can chain workers together .
          b. add backoff policy(time after which worker runs agiain when failing) , use automatic threading and coroutines
+
+Suspend Coroutine , Complete defferable and suspend cancel coroutine
+   1. suspend coroutine and suspend cancel coroutine are both call based coroutine which can be return result based on the call back received whether it is success or failure            either exception.
+   2. what they is they Pause a coroutine , Wait for some callback-based code to finish and Resume the coroutine with either a result or an exception .
+   3. Complete defferable is also other coroutine based api which waits for function to complete or function returns some result or complete itself with a result .
+   4. these mostly are used with legacy call back based api callings ... complete deffered where else is different .
      
 
 BroadCasts (https://medium.com/@khush.panchal123/understanding-broadcast-receivers-in-android-044fbfaa1330)
