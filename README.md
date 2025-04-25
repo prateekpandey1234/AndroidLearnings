@@ -1,5 +1,9 @@
 # AndroidLearnings
-
+Normal kotlin stuff 
+   1. a companion object is where we store static functions or classes  , static functions are those which don't need intialisation or anything to be accessible and run 
+      , these functions or variables are globally scoped and can be changed anywhere . 
+   2. like normal variable -> class().var1
+      static variable -> class.var2  as we can see these are globally scoped not based on single instance of app.
 State Hoisting in compose
    1. there are two types of compose, statefull and stateless .
    2. statefull compose are those who use remember tyype of delegation to observe and recompose in case of any event occurence like text change , but this makes the composable           hard to test and can cause unneccessary recompositions sometimes
