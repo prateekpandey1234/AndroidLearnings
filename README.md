@@ -4,6 +4,8 @@ Normal kotlin stuff
       , these functions or variables are globally scoped and can be changed anywhere . 
    2. like normal variable -> class().var1
       static variable -> class.var2  as we can see these are globally scoped not based on single instance of app.
+   3. let{} extesnsion function is used 2 ways : 1-> is used to null check and 2-> it also thread safe operation as it creates copy of current instance and do modification for that
+      specific thread.
 
 
 State Hoisting in compose
