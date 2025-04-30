@@ -14,6 +14,14 @@ State Hoisting in compose
    3. stateless is the scenario when the compose is being controlled by it's caller making the compose stateless , this is also called state hoisting
    4. most of the time the collecting and emitting works on same dispatcher of current context in which flow is called , we can switch that like using flowOn which allows
       emitting on Io thread but for collection you have to use withContext to switch dispcatcher
+   5. remember is inline compose function which stores value of variable when it was intially composed , then on recompositions it will store value , using remeberSavable we can         save states across any configuration changes , this makes compose statefull.
+   6. Compose is decalartive UI , instead of adding, chaging ui . we update ui depending on different ui states .
+   7. When hoisting state, there are three rules to help you figure out where state should go:
+      
+            a. State should be hoisted to at least the lowest common parent of all composables that use the state (read).
+            b. State should be hoisted to at least the highest level it may be changed (write).
+            c. If two states change in response to the same events they should be hoisted to the same level.
+      You can hoist the state higher than these rules require, but if you don’t hoist the state high enough, it might be difficult or impossible to follow unidirectional data flow.
 
 Observers
    1. there are 4 types of observers : Live Data , StateFlow , Flow and SharedFlow
