@@ -22,7 +22,10 @@ State Hoisting in compose
             b. State should be hoisted to at least the highest level it may be changed (write).
             c. If two states change in response to the same events they should be hoisted to the same level.
       You can hoist the state higher than these rules require, but if you don’t hoist the state high enough, it might be difficult or impossible to follow unidirectional data flow.
-
+   8. derived state of is also an inline function which helps to update ui from any state changes but these state changes are very frequent like scrolling state changes , what it        does is that it helps in stopping execssive recompositions and only recomposes when certain condition or threashold is reached for that state which changing many times .
+      using normal remember will cause mulitple recomposition so we use derived state which creates a new state itself to stop those extra recompositions .
+      (https://medium.com/androiddevelopers/jetpack-compose-when-should-i-use-derivedstateof-63ce7954c11b)
+   
 Observers
    1. there are 4 types of observers : Live Data , StateFlow , Flow and SharedFlow
    2. Live Data is basic state holder which obervers any change in the state of data like life cycle changes , also it is lifecycler aware
@@ -32,6 +35,7 @@ Observers
    5. flow is a oberver but it will only fetch data when collector is called like when button clicked you have to trigger flow.collect to get latest data , it utilises coroutines
       , allows transformation and mapping .
    6. Shared flow : It emits all the values and does not care about the distinct from the previous item. It emits consecutive repeated values also.
+
 
 Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
    1. Used in place of collections when data is in millions of order .
