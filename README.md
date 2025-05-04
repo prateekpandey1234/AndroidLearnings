@@ -1,3 +1,9 @@
+#Android Interview Posts
+1. https://kanchan-pal.medium.com/paypal-interview-experience-sde-3-a015695d0eba
+
+
+
+
 # AndroidLearnings
 Normal kotlin stuff 
    1. a companion object is where we store static functions or classes  , static functions are those which don't need intialisation or anything to be accessible and run 
