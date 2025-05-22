@@ -184,6 +184,8 @@ DataBase
          Old Version: Comes from the existing database file on the user's device
          New Version: Defined in your current code's database helper class
          The version comparison happens automatically by the Android SQLite framework
+   6. always keep database single in app don't create different databases , you can create different table within them .
+   7. for Room db with sql injection , to create db for multiple users is to create different tables with names like TABLE_NAME+user_id and as userId changes , db changes and gets       created .
 
 
 Testing
