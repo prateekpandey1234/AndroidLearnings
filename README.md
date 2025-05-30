@@ -13,6 +13,8 @@ Normal kotlin stuff
    3. let{} extesnsion function is used 2 ways : 1-> is used to null check and 2-> it also thread safe operation as it creates copy of current instance and do modification for that
       specific thread.
 
+Dependency Injection
+   1. scoping and cutom components hilt android https://x.com/nagataro_san475/status/1928560079738917241
 
 State Hoisting in compose
    1. there are two types of compose, statefull and stateless .
