@@ -17,12 +17,19 @@ Dependency Injection
    1. scoping and cutom components hilt android https://x.com/nagataro_san475/status/1928560079738917241 ,https://medium.com/androiddevelopers/hilt-adding-components-to-the-hierarchy-96f207d6d92d , https://medium.com/mindful-engineering/more-on-hilt-custom-components-custom-scope-f66c441c40c9
    2. The Component Hierarchy (Like a Family Tree)
       Hilt organizes your app like a family tree. Each level lives for a different amount of time:
+      
       🏠 Application (Lives for entire app lifetime)
-          ↓
+      
+      ↓
+      
       📱 Activity (Lives while screen is open)
-          ↓  
+      
+      ↓  
+
       🧩 Fragment (Lives while that piece of screen exists)
-          ↓
+      
+      ↓
+
       👁️ View (Lives while that button/text exists)
 
 State Hoisting in compose
