@@ -14,7 +14,7 @@ Normal kotlin stuff
       specific thread.
 
 Dependency Injection
-   1. scoping and cutom components hilt android https://x.com/nagataro_san475/status/1928560079738917241
+   1. scoping and cutom components hilt android https://x.com/nagataro_san475/status/1928560079738917241 ,https://medium.com/androiddevelopers/hilt-adding-components-to-the-hierarchy-96f207d6d92d , https://medium.com/mindful-engineering/more-on-hilt-custom-components-custom-scope-f66c441c40c9
 
 State Hoisting in compose
    1. there are two types of compose, statefull and stateless .
