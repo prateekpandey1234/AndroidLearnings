@@ -34,7 +34,9 @@ Dependency Injection
 
       👁️ View (Lives while that button/text exists)
       Components are those generated objects which help in generate abstract class which acts as a container full with dependcies and code ready to inject in classes with the            logic 
-   4. Entry points are like gateways to non hilt code to access the dragger code . just like we use @AndroidEntryPoint for activities,fragments and view . we have to provide a entry point for . @AndroidEntryPoint also handle injection of depencies and how and when inside the android componenet . 
+   4. Entry points are like gateways to non hilt code to access the dragger code . just like we use @AndroidEntryPoint for activities,fragments and view . we have to provide a           entry point for . @AndroidEntryPoint also handle injection of depencies and how and when inside the android componenet . 
+   5. @Module or module is used to tell dragger that this is class or object which when installed within a component life cycle scope will help in coordinate depedency injections .
+      It acts as a configuration point, declaring which objects will be provided for injection and their scope. Essentially, a module tells the dependency injection framework how          to create and provide instances of classes, particularly those that might not be directly owned by your application
 
 State Hoisting in compose
    1. there are two types of compose, statefull and stateless .
