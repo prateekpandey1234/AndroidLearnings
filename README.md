@@ -1,5 +1,7 @@
 #Android Interview Posts
 1. https://kanchan-pal.medium.com/paypal-interview-experience-sde-3-a015695d0eba
+2.https://github.com/weeeBox/mobile-system-design
+3. https://gist.github.com/atierian/610538f39a4844881e20b673f4c8e8dc
 
 
 
@@ -31,6 +33,8 @@ Dependency Injection
       ↓
 
       👁️ View (Lives while that button/text exists)
+      Components are those generated objects which help in generate abstract class which acts as a container full with dependcies and code ready to inject in classes with the            logic 
+   4. Entry points are like gateways to non hilt code to access the dragger code . just like we use @AndroidEntryPoint for activities,fragments and view . we have to provide a entry point for . @AndroidEntryPoint also handle injection of depencies and how and when inside the android componenet . 
 
 State Hoisting in compose
    1. there are two types of compose, statefull and stateless .
