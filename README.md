@@ -16,7 +16,9 @@ Normal kotlin stuff
       specific thread.
 
 Notifications
+
    Why Device Tokens Change:
+   
       Security Enhancement - Tokens are rotated periodically to prevent unauthorized access and maintain security integrity
       Privacy Protection - Regular token changes help protect user privacy by making it harder to track devices over long periods
       System Updates - OS updates often trigger token regeneration as part of security improvements
@@ -24,6 +26,7 @@ Notifications
       Platform Requirements - Both Apple and Google mandate token refresh cycles as part of their push notification service protocols
       
    When Device Tokens Change:
+   
       App Reinstallation - New installation always generates a fresh token
       OS Updates - Major or minor system updates frequently trigger token regeneration
       App Updates - Updating the app version can cause token refresh, especially with significant changes
@@ -34,6 +37,7 @@ Notifications
       Security Events - Detected security threats or suspicious activity may force token regeneration
       
    Best Practices:
+   
       Always Monitor Token Changes - Implement callbacks to detect and update tokens immediately
       Store Tokens Server-Side - Keep updated tokens in your backend database
       Handle Token Refresh Gracefully - Don't assume tokens remain constant
