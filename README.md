@@ -15,6 +15,31 @@ Normal kotlin stuff
    3. let{} extesnsion function is used 2 ways : 1-> is used to null check and 2-> it also thread safe operation as it creates copy of current instance and do modification for that
       specific thread.
 
+Notifications
+   Why Device Tokens Change:
+      Security Enhancement - Tokens are rotated periodically to prevent unauthorized access and maintain security integrity
+      Privacy Protection - Regular token changes help protect user privacy by making it harder to track devices over long periods
+      System Updates - OS updates often trigger token regeneration as part of security improvements
+      Anti-Fraud Measures - Token rotation helps prevent malicious actors from reusing old tokens for spam or unauthorized notifications
+      Platform Requirements - Both Apple and Google mandate token refresh cycles as part of their push notification service protocols
+      
+   When Device Tokens Change:
+      App Reinstallation - New installation always generates a fresh token
+      OS Updates - Major or minor system updates frequently trigger token regeneration
+      App Updates - Updating the app version can cause token refresh, especially with significant changes
+      Device Restore - Restoring from backup or factory reset creates new tokens
+      Long Periods of Inactivity - Tokens may expire and regenerate after extended periods without app usage
+      Cloud Account Changes - Signing out/in to iCloud (iOS) or Google account (Android) can trigger token refresh
+      Push Service Reconnection - When the device reconnects to APNs (iOS) or FCM (Android) after network issues
+      Security Events - Detected security threats or suspicious activity may force token regeneration
+      
+   Best Practices:
+      Always Monitor Token Changes - Implement callbacks to detect and update tokens immediately
+      Store Tokens Server-Side - Keep updated tokens in your backend database
+      Handle Token Refresh Gracefully - Don't assume tokens remain constant
+      Regular Token Validation - Periodically verify tokens are still valid before sending notifications
+      RetryClaude can make mistakes. Please double-check responses. 
+
 Dependency Injection
    1. scoping and cutom components hilt android https://x.com/nagataro_san475/status/1928560079738917241 ,https://medium.com/androiddevelopers/hilt-adding-components-to-the-hierarchy-96f207d6d92d , https://medium.com/mindful-engineering/more-on-hilt-custom-components-custom-scope-f66c441c40c9
    2. The Component Hierarchy (Like a Family Tree)
