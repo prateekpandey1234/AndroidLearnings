@@ -6,6 +6,7 @@
 
 
 
+
 # AndroidLearnings
 Normal kotlin stuff 
    1. a companion object is where we store static functions or classes  , static functions are those which don't need intialisation or anything to be accessible and run 
@@ -14,6 +15,12 @@ Normal kotlin stuff
       static variable -> class.var2  as we can see these are globally scoped not based on single instance of app.
    3. let{} extesnsion function is used 2 ways : 1-> is used to null check and 2-> it also thread safe operation as it creates copy of current instance and do modification for that
       specific thread.
+
+
+Pagination
+   1. there are two types of paginations :-
+         a. Offset based when you handle with small data or low model complexity , the implementation is fairly easy with determining the current offset/page user is then make api call                and then add it to db and then show it to the ui screen .
+         b. We a mediator to handle this data exchange , we also use caching (small db) handling for ui loading . 
 
 Notifications
 
@@ -239,6 +246,13 @@ DataBase
          The version comparison happens automatically by the Android SQLite framework
    6. always keep database single in app don't create different databases , you can create different table within them .
    7. for Room db with sql injection , to create db for multiple users is to create different tables with names like TABLE_NAME+user_id and as userId changes , db changes and gets       created .
+   8. withTransaction is an extensiuon function inside the room-ktx library which allows to operate multiple db queries sequentially  , like you want to refresh db . so
+      
+            db.withTransaction{
+               db.claer()
+               db.insert() // if this fails then the clear() query is also called off and db is restored 
+            }
+      this allows to make sure our db data is safe even if something goes wrong.
 
 
 Testing
