@@ -253,6 +253,21 @@ DataBase
                db.insert() // if this fails then the clear() query is also called off and db is restored 
             }
       this allows to make sure our db data is safe even if something goes wrong.
+      Yes, clear() does remove everything from the database immediately. But here's the key part:
+      Where does the rollback data come from?
+      SQLite maintains a rollback journal (or WAL - Write-Ahead Log in WAL mode) that contains:
+      
+      Before-images: The original data before each change
+      Undo operations: Instructions on how to reverse each change
+      
+      So when clear() executes:
+      
+      SQLite first writes all the existing data to the rollback journal
+      Then it deletes the data from the main database
+      If insert() later fails, SQLite reads from the rollback journal to restore the original data
+   10. so what does sql in room does is that it stores a journal logs of the queries it ran like if it deleted some data , it stores that in disk . this also is done in paging-cache way to 
+      avoid lockdowns and heavy db time taking .
+      
 
 
 Testing
