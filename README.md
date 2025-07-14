@@ -265,8 +265,16 @@ DataBase
       SQLite first writes all the existing data to the rollback journal
       Then it deletes the data from the main database
       If insert() later fails, SQLite reads from the rollback journal to restore the original data
-   10. so what does sql in room does is that it stores a journal logs of the queries it ran like if it deleted some data , it stores that in disk . this also is done in paging-cache way to 
-      avoid lockdowns and heavy db time taking .
+   10. so what does sql in room does is that it stores a journal logs of the queries it ran like if it deleted some data , it stores that in disk . this also is done in paging-cache way          to avoid lockdowns and heavy db time taking .
+
+
+Caching
+   1. There are 3 types of caching used in android :-
+      a. using shared presferences , in this we use key-value pair to store value in android for local caching 
+      b. using Room/sql database , simple use case like local db
+      c. Lru cache based , notstudied yet .
+   2. so in case of thes local storing data , we can get confused with that it is basically storing data but what we can do is that add some case/condition so that data becomes expires:-
+      Make it "cache-like" through Time limit , size limits, automatic cleanup, and clear separation from persistent data in your architecture.
       
 
 
