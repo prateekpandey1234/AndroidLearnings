@@ -102,6 +102,10 @@ Observers
    5. flow is a oberver but it will only fetch data when collector is called like when button clicked you have to trigger flow.collect to get latest data , it utilises coroutines
       , allows transformation and mapping .
    6. Shared flow : It emits all the values and does not care about the distinct from the previous item. It emits consecutive repeated values also.
+   7. In shared Flow , there are ways we can handle the stream :-
+         a. with replay we can manage what amount of last events we can give to new subscribers to stream
+         b. Shared flow also have concept of buffer which is a sort of temprory storage which stores references to the data/model we are emitting and it is used in case the collectors are             buy processing the ui with previous data
+         c. we can also anage if that buffer is full then we can remove oldest data to stop overflowing nd = allow latest data to emit
 
 
 Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
