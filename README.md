@@ -19,8 +19,11 @@ Normal kotlin stuff
 
 Pagination
    1. there are two types of paginations :-
-         a. Offset based when you handle with small data or low model complexity , the implementation is fairly easy with determining the current offset/page user is then make api call                and then add it to db and then show it to the ui screen .
+         a. Offset based when you handle with small data or low model complexity , the implementation is fairly easy with determining the current offset/page user is then make api             call and then add it to db and then show it to the ui screen .
          b. We a mediator to handle this data exchange , we also use caching (small db) handling for ui loading . 
+   2. Cursor based implementation is basically we use when an id or key in our request to basically help lower the load of requests , these ids can be timetamp based , sequential            based , based on other indicators .
+        a. time stamp is sort of like newerThan and return that time from last request , same goes for when we want to request data after previous id (sequential)
+        
 
 Notifications
 
