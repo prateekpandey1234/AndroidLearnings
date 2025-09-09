@@ -2,6 +2,7 @@
 1. https://kanchan-pal.medium.com/paypal-interview-experience-sde-3-a015695d0eba
 2.https://github.com/weeeBox/mobile-system-design
 3. https://gist.github.com/atierian/610538f39a4844881e20b673f4c8e8dc
+4. https://artem-goncharov.medium.com/grokking-the-mobile-system-design-interview-6a06fa94491b 
 
 
 
