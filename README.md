@@ -1,385 +1,502 @@
-#Android Interview Posts
-1. https://kanchan-pal.medium.com/paypal-interview-experience-sde-3-a015695d0eba
-2.https://github.com/weeeBox/mobile-system-design
-3. https://gist.github.com/atierian/610538f39a4844881e20b673f4c8e8dc
+# Android Learnings
 
+## Android Interview Resources
 
+1. [PayPal Interview Experience - SDE 3](https://kanchan-pal.medium.com/paypal-interview-experience-sde-3-a015695d0eba)
+2. [Mobile System Design](https://github.com/weeeBox/mobile-system-design)
+3. [Additional Resources](https://gist.github.com/atierian/610538f39a4844881e20b673f4c8e8dc)
 
+---
 
+## Kotlin Fundamentals
 
-# AndroidLearnings
-Normal kotlin stuff 
-   1. a companion object is where we store static functions or classes  , static functions are those which don't need intialisation or anything to be accessible and run 
-      , these functions or variables are globally scoped and can be changed anywhere . 
-   2. like normal variable -> class().var1
-      static variable -> class.var2  as we can see these are globally scoped not based on single instance of app.
-   3. let{} extesnsion function is used 2 ways : 1-> is used to null check and 2-> it also thread safe operation as it creates copy of current instance and do modification for that
-      specific thread.
+### Companion Objects & Static Functions
 
+1. **Companion objects** store static functions or classes
+2. **Static functions** don't need initialization and are globally accessible
+   - Normal variable: `class().var1`
+   - Static variable: `class.var2` (globally scoped, not instance-based)
 
-Pagination
-   1. there are two types of paginations :-
-         a. Offset based when you handle with small data or low model complexity , the implementation is fairly easy with determining the current offset/page user is then make api             call and then add it to db and then show it to the ui screen .
-         b. We a mediator to handle this data exchange , we also use caching (small db) handling for ui loading . 
-   2. Cursor based implementation is basically we use when an id or key in our request to basically help lower the load of requests , these ids can be timetamp based , sequential            based , based on other indicators .
-        a. time stamp is sort of like newerThan and return that time from last request , same goes for when we want to request data after previous id (sequential)
+### Extension Functions
 
-Memory Leaks (https://proandroiddev.com/everything-you-need-to-know-about-memory-leaks-in-android-d7a59faaf46a)
-   1. there are 3 major components in android system which handles memory management in android :
-            a. Garbage Collector ( process by JVM ) -> it's role is free up space and allocate that free space/memory to other ongoing process
-            b. Stack -> it's the data structure which keep static memory , it's a part of RAM , in short terms stack keeps track of all the process started in app with LIFO (Last                          in first out ) policy  , it stores reference to object allocated in the heap .
-            c. Heap -> it's a dynamic memory sytem which is used by JVM to allocate the object classes which are create and referenced by stack for accessing the process 
-   2. the JVM has made a superhero for helping us. We called it the Garbage Collector. He is going to do the hard work for us. And caring about detecting unused objects, release         them, and reclaim more space in the memory.
-   3. A memory leak happens when the stack still refers to unused objects in the heap ,  we see that when we have objects referenced from the stack but not in use anymore. The           garbage collector will never release or freeing them up from the memory cause it shows that those objects are in use while they are not.
-   4. there are some ways we can cause memory leaks :-
-            a. No proper life cycle management of background workers :- if we start a background work which takes 20 secs but user goes back / rotate screen still the old work
-               will be in going on for 10 secs which is stored by heap , even if going back/rotate screen allows removal of that method from stack but still that object used is in                heap.
-            b. Wrong uses of activity - context :- whenever we use activity context exspecially for toasts,singleton or other long period works , always use application context                   (getApplicationContext) which even if user is on another screen or configuration changes , the heap is till refernced which allows the GC to remove it .
-   5. memory leaks can cause :-
-            a. lags in the app :- due to memory leaks the load on GC increases as well which causes the app to be laggy , if we want to achieve 60fps for the app which we have to 
-               render frame every 1/60 sec which allows not a big window for gc operation .
-            b. ANR(app not responsive):- if ui thread is blocked then app returns this ANR.
-            c. Out of memory :-  this happens when JVM can not allocate more object memory into the heap , as each heap has it's own maximum size limit .
-            
-        
+3. **`let{}` extension function** serves two purposes:
+   - Null checking
+   - Thread-safe operations (creates copy of current instance for specific thread)
 
-Notifications
+---
 
-   Why Device Tokens Change:
-   
-      Security Enhancement - Tokens are rotated periodically to prevent unauthorized access and maintain security integrity
-      Privacy Protection - Regular token changes help protect user privacy by making it harder to track devices over long periods
-      System Updates - OS updates often trigger token regeneration as part of security improvements
-      Anti-Fraud Measures - Token rotation helps prevent malicious actors from reusing old tokens for spam or unauthorized notifications
-      Platform Requirements - Both Apple and Google mandate token refresh cycles as part of their push notification service protocols
-      
-   When Device Tokens Change:
-   
-      App Reinstallation - New installation always generates a fresh token
-      OS Updates - Major or minor system updates frequently trigger token regeneration
-      App Updates - Updating the app version can cause token refresh, especially with significant changes
-      Device Restore - Restoring from backup or factory reset creates new tokens
-      Long Periods of Inactivity - Tokens may expire and regenerate after extended periods without app usage
-      Cloud Account Changes - Signing out/in to iCloud (iOS) or Google account (Android) can trigger token refresh
-      Push Service Reconnection - When the device reconnects to APNs (iOS) or FCM (Android) after network issues
-      Security Events - Detected security threats or suspicious activity may force token regeneration
-      
-   Best Practices:
-   
-      Always Monitor Token Changes - Implement callbacks to detect and update tokens immediately
-      Store Tokens Server-Side - Keep updated tokens in your backend database
-      Handle Token Refresh Gracefully - Don't assume tokens remain constant
-      Regular Token Validation - Periodically verify tokens are still valid before sending notifications
-      RetryClaude can make mistakes. Please double-check responses. 
+## Pagination
 
-Dependency Injection
-   1. scoping and cutom components hilt android https://x.com/nagataro_san475/status/1928560079738917241 ,https://medium.com/androiddevelopers/hilt-adding-components-to-the-hierarchy-96f207d6d92d , https://medium.com/mindful-engineering/more-on-hilt-custom-components-custom-scope-f66c441c40c9
-   2. The Component Hierarchy (Like a Family Tree)
-      Hilt organizes your app like a family tree. Each level lives for a different amount of time:
-      
-      🏠 Application (Lives for entire app lifetime)
-      
-      ↓
-      
-      📱 Activity (Lives while screen is open)
-      
-      ↓  
+### Types of Pagination
 
-      🧩 Fragment (Lives while that piece of screen exists)
-      
-      ↓
+1. **Offset-based pagination**
+   - Used for small data or low model complexity
+   - Easy implementation with current offset/page tracking
+   - Process: determine current offset → API call → add to DB → display on UI
+   - Uses mediator for data exchange and caching for UI loading
 
-      👁️ View (Lives while that button/text exists)
-      Components are those generated objects which help in generate abstract class which acts as a container full with dependcies and code ready to inject in classes with the            logic 
-   4. Entry points are like gateways to non hilt code to access the dragger code . just like we use @AndroidEntryPoint for activities,fragments and view . we have to provide a           entry point for . @AndroidEntryPoint also handle injection of depencies and how and when inside the android componenet . 
-   5. @Module or module is used to tell dragger that this is class or object which when installed within a component life cycle scope will help in coordinate depedency injections .
-      It acts as a configuration point, declaring which objects will be provided for injection and their scope. Essentially, a module tells the dependency injection framework how          to create and provide instances of classes, particularly those that might not be directly owned by your application
+2. **Cursor-based pagination**
+   - Uses ID or key in requests to reduce load
+   - ID types: timestamp-based, sequential-based, or other indicators
+   - Timestamp: `newerThan` parameter returns data from last request
+   - Sequential: request data after previous ID
 
-State Hoisting in compose
-   1. there are two types of compose, statefull and stateless .
-   2. statefull compose are those who use remember tyype of delegation to observe and recompose in case of any event occurence like text change , but this makes the composable           hard to test and can cause unneccessary recompositions sometimes
-   3. stateless is the scenario when the compose is being controlled by it's caller making the compose stateless , this is also called state hoisting
-   4. most of the time the collecting and emitting works on same dispatcher of current context in which flow is called , we can switch that like using flowOn which allows
-      emitting on Io thread but for collection you have to use withContext to switch dispcatcher
-   5. remember is inline compose function which stores value of variable when it was intially composed , then on recompositions it will store value , using remeberSavable we can         save states across any configuration changes , this makes compose statefull.
-   6. Compose is decalartive UI , instead of adding, chaging ui . we update ui depending on different ui states .
-   7. When hoisting state, there are three rules to help you figure out where state should go:
-      
-            a. State should be hoisted to at least the lowest common parent of all composables that use the state (read).
-            b. State should be hoisted to at least the highest level it may be changed (write).
-            c. If two states change in response to the same events they should be hoisted to the same level.
-      You can hoist the state higher than these rules require, but if you don’t hoist the state high enough, it might be difficult or impossible to follow unidirectional data flow.
-   8. derived state of is also an inline function which helps to update ui from any state changes but these state changes are very frequent like scrolling state changes , what it        does is that it helps in stopping execssive recompositions and only recomposes when certain condition or threashold is reached for that state which changing many times .
-      using normal remember will cause mulitple recomposition so we use derived state which creates a new state itself to stop those extra recompositions .
-      (https://medium.com/androiddevelopers/jetpack-compose-when-should-i-use-derivedstateof-63ce7954c11b)
-   9. you can use remember(key1,key2) to assign that data against that specific id or rememberSaveable(key1) to survive more
-   
-Observers
-   1. there are 4 types of observers : Live Data , StateFlow , Flow and SharedFlow
-   2. Live Data is basic state holder which obervers any change in the state of data like life cycle changes , also it is lifecycler aware
-   3. State Flow is LiveData+fLOW benefits , also stores latest changes in state but can perform multiple operations like mapping or transform
-     , also made up with coroutines so no need of suspend function declaration, but it is not life cycle aware so we have to collect latest state when life cycle state changes
-      issue with this is that it will only emit value once inside current lifecycle if previous and current value are same
-   5. flow is a oberver but it will only fetch data when collector is called like when button clicked you have to trigger flow.collect to get latest data , it utilises coroutines
-      , allows transformation and mapping .
-   6. Shared flow : It emits all the values and does not care about the distinct from the previous item. It emits consecutive repeated values also.
-   7. In shared Flow , there are ways we can handle the stream :-
-         a. with replay we can manage what amount of last events we can give to new subscribers to stream
-         b. Shared flow also have concept of buffer which is a sort of temprory storage which stores references to the data/model we are emitting and it is used in case the collectors are             buy processing the ui with previous data
-         c. we can also anage if that buffer is full then we can remove oldest data to stop overflowing nd = allow latest data to emit
+---
 
+## Memory Leaks
 
-Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
-   1. Used in place of collections when data is in millions of order .
-   2. sequence are lazy evaluters , that means they process each item one by one and avoid creation of temproray collection(list,map etc) for any operations.
-   3. these have two functions : intermediate and terminal
-   4. intermediate will process one object and give to terminal function to add it to result , intermediate functions don't create or use temp collection
-   5. this saves whole memory in process but hard to implement and complexes code
-   6. val list = (1..1_000_000).toList()
-      // Creates 3 intermediate lists!
-      val result = list
-          .filter { it % 2 == 0 }   // Intermediate list 1
-          .map { it * 2 }           // Intermediate list 2
-          .take(10)                 // Intermediate list 3
-          .toList()
-   
-      val sequence = (1..1_000_000).asSequence()
-      // Processes elements one by one, no intermediate lists!
-      val result = sequence
-          .filter { it % 2 == 0 }  // Intermediate
-          .map { it * 2 }          // Intermediate
-          .take(10)                // Intermediate
-          .toList()                // Terminal
+> 📚 Reference: [Everything about Memory Leaks in Android](https://proandroiddev.com/everything-you-need-to-know-about-memory-leaks-in-android-d7a59faaf46a)
 
-Side Effects
-   1. LaunchedEffects is triggered evey time when value of it's is changed and utilises coroutinescope to run any IO operatons
-   2. Disposable effect is like launchedeffect except for coroutinescope and is it moslty used to handle handle lifecyle events , onDispose is must
-      as it is called whenever the key leave recompostion
+### Memory Management Components
 
-Flows
-   1. // Flow is like a  stream of data flowing through a pipe.
-      // it can be of 2 ways (hot which is active everytime or cold which works only when collected)
-      // flow is very best when working with complex async coroutines calls
-      // can use functions such as filter , map or many other functions to play with data
-      // cold flows also help in saving memory as they only work when collected
-      // flow is not lifecycle aware
-   2. flow has producer(emits the data using emit()) , intermediaries(optional , vcan modify the emitted data) and consumer (collect() to get flow output)
-   3. flow work only when you want to receive data  On the other hand, Kotlin Flow is suitable for handling asynchronous operations that produce multiple values over time. This makes it ideal for scenarios where you need to observe changes in data, such as streaming data from a network or observing changes in a database. Kotlin Flow allows you to handle streams of data asynchronously and apply operators like map, filter, and transform
-   4. https://medium.com/androiddevelopers/consuming-flows-safely-in-jetpack-compose-cde014d0d5a3
-   5. https://medium.com/@devarshbhalara3072/building-efficient-api-calls-in-android-with-retrofit-coroutines-flow-and-dependency-injection-60e022b16987
-   6.  always remember to add flow as an lifecycleaware component
-   8.  flow is a one timer thing doesn't hold the state or any data , if reset it will go to orginal data before changing
+1. **Garbage Collector (JVM process)**
+   - Frees up space and allocates memory to other processes
 
-Coroutines
-   1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
+2. **Stack**
+   - Data structure keeping static memory (part of RAM)
+   - Tracks all app processes with LIFO policy
+   - Stores references to objects allocated in heap
 
+3. **Heap**
+   - Dynamic memory system used by JVM
+   - Allocates object classes referenced by stack
 
-ViewModel
-   1. use job{ ViewmodelScope.launch()} , to cancel any type of long running jobs running in the background like fetching and processing data
-      https://medium.com/@paritasampa95/coroutinescope-coroutinecontext-discussed-in-depth-to-understand-better-part-2-550dbc7af3d2
-   2. https://x.com/nagataro_san475/status/1875593012648276202
-   3.  private val _isLoading  = MutableLiveData<Boolean>()
-       val isLoading  :LiveData<Boolean> = _isLoading
-      this allows immutablitiy of isLoading by outer access , only edited inside the viewModel even when _isLoading is mutable
+### Memory Leak Causes
 
-Workers Android(https://medium.com/@appdevinsights/work-manager-android-6ea8daad56ee)
-   1. workers are android based api used to run tasks even when app is killed or tasks which needs to scheduled , user doesn't has any interaction during this process and 
-      ex:- data base cync , daily regular apis
-   2. there are several benefits of a workmanager :-
-         a. can make a worker periodic , add constraints like(low battery , netowrk ) , can chain workers together .
-         b. add backoff policy(time after which worker runs agiain when failing) , use automatic threading and coroutines
+Memory leaks occur when stack still refers to unused objects in heap.
 
-Suspend Coroutine , Complete defferable and suspend cancel coroutine
-   1. suspend coroutine and suspend cancel coroutine are both call based coroutine which can be return result based on the call back received whether it is success or failure            either exception.
-   2. what they is they Pause a coroutine , Wait for some callback-based code to finish and Resume the coroutine with either a result or an exception .
-   3. Complete defferable is also other coroutine based api which waits for function to complete or function returns some result or complete itself with a result .
-   4. these mostly are used with legacy call back based api callings ... complete deffered where else is different .
-     
+**Common causes:**
+- **Improper lifecycle management** of background workers
+- **Wrong use of activity context** - use `getApplicationContext()` instead
 
-BroadCasts (https://medium.com/@khush.panchal123/understanding-broadcast-receivers-in-android-044fbfaa1330)
-   1. BroadCasts are kind of android system wise events which can be received by app if it has registered that event type , these events are generally network connection ,               airplane mod or sms 
-   2. there are 2 types of broadcasts we can use:-
-         a. static / manifest broadcast are those which can cause triggereing of onCreate() on application context , these are defined within the mainfest .
-         b. context/dynamic broadcast are those which can be registered based on context of activity and they have to be unregistered when in no need .
-   3. broadcast are sent / recievedin terms of intent ... these broadcasts can also be made locally for any other receiver within the app .
-   4. when receiving a broadcast to register remeber :- RECEIVER_EXPORTED flag needs to be add for custom broadcast, it indicates that other apps can send the broadcast to our             app.
-   5. Pending intents are used whenever you want try to recive any data or info from broadcast.(https://medium.com/@appdevinsights/pending-intent-in-android-fc93a8b6c2ac)
-   6. this a type of intent which is given to android system apis to work upon and send data back to our app , we can set whether these intent work ,
-               PendingIntent.getActivity() : Retrieve a PendingIntent to start an Activity
-               PendingIntent.getBroadcast() : Retrieve a PendingIntent to perform a Broadcast
-               PendingIntent.getService() : Retrieve a PendingIntent to start a Service
-   7. also when registering the broadcast , mention it clearly which type of intent broadcast you need to see like IntentFilter("SMS_deliver") to detect if the intent which is           using this filter is completed or not .
-   8.                                 // receiver used for receiving sms response
-            context.registerReceiver(object : BroadcastReceiver(){
-                override fun onReceive(p0: Context?, intent: Intent?) {
-                    if (intent?.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
-                        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-                        for (sms in messages) {
-                            val sender = sms.originatingAddress
-                            // Check if this is from the number we sent to
-                            if (sender?.replace("+", "")?.contains(phoneNumber.replace("+", "")) == true) {
+### Memory Leak Consequences
 
-                                onSuccess()
-                                // You can call another callback here to handle the received message
-                                // For example: onSmsReceived(sender, body)
-                            }
-                        }
-                        context.unregisterReceiver(this)
-                    }
+- **App lags** - Increased GC load affects 60fps rendering
+- **ANR (App Not Responsive)** - UI thread blocked
+- **Out of Memory** - JVM can't allocate more objects to heap
+
+---
+
+## Notifications
+
+### Why Device Tokens Change
+
+- **Security Enhancement** - Periodic token rotation prevents unauthorized access
+- **Privacy Protection** - Regular changes prevent long-term device tracking  
+- **System Updates** - OS updates trigger token regeneration
+- **Anti-Fraud Measures** - Prevents malicious reuse of old tokens
+- **Platform Requirements** - Apple and Google mandate refresh cycles
+
+### When Device Tokens Change
+
+- App reinstallation
+- OS updates
+- App updates
+- Device restore
+- Long periods of inactivity
+- Cloud account changes
+- Push service reconnection
+- Security events
+
+### Best Practices
+
+- Always monitor token changes
+- Store tokens server-side
+- Handle token refresh gracefully
+- Regular token validation
+
+---
+
+## Dependency Injection
+
+### Resources
+- [Hilt Android Scoping](https://x.com/nagataro_san475/status/1928560079738917241)
+- [Hilt Custom Components](https://medium.com/androiddevelopers/hilt-adding-components-to-the-hierarchy-96f207d6d92d)
+- [More on Hilt Custom Components](https://medium.com/mindful-engineering/more-on-hilt-custom-components-custom-scope-f66c441c40c9)
+
+### Component Hierarchy
+
+```
+🏠 Application (Lives for entire app lifetime)
+    ↓
+📱 Activity (Lives while screen is open)
+    ↓  
+🧩 Fragment (Lives while that piece of screen exists)
+    ↓
+👁️ View (Lives while that button/text exists)
+```
+
+### Key Concepts
+
+- **Components** - Generated objects that act as containers with dependencies ready for injection
+- **Entry points** - Gateways for non-Hilt code to access Dagger code
+- **@Module** - Tells Dagger this class coordinates dependency injections when installed within component lifecycle scope
+
+---
+
+## State Hoisting in Compose
+
+### Compose Types
+
+1. **Stateful Compose** - Uses `remember` delegation, harder to test, may cause unnecessary recompositions
+2. **Stateless Compose** - Controlled by caller (state hoisting), easier to test
+
+### State Management
+
+- **`remember`** - Inline function storing variable value during initial composition
+- **`rememberSavable`** - Saves states across configuration changes
+- **Compose is declarative UI** - Update UI based on different states instead of adding/changing
+
+### State Hoisting Rules
+
+1. State should be hoisted to at least the **lowest common parent** of all composables that use it (read)
+2. State should be hoisted to at least the **highest level** it may be changed (write)  
+3. If two states change in response to the same events, they should be **hoisted to the same level**
+
+### Additional Concepts
+
+- **`derivedStateOf`** - Prevents excessive recompositions for frequently changing states
+- **Flow collection** - Most operations work on same dispatcher, use `flowOn` to switch for emission
+
+---
+
+## Observers
+
+### Types of Observers
+
+1. **LiveData** - Basic lifecycle-aware state holder
+2. **StateFlow** - LiveData + Flow benefits, not lifecycle-aware
+3. **Flow** - Observer that fetches data only when collected
+4. **SharedFlow** - Emits all values, including consecutive repeated values
+
+### SharedFlow Configuration
+
+- **Replay** - Manages last events given to new subscribers
+- **Buffer** - Temporary storage for data/model references
+- **Overflow handling** - Remove oldest data when buffer is full
+
+---
+
+## Sequences
+
+> 📚 Reference: [Kotlin Sequences](https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
+
+### When to Use
+- Used for data in millions of order
+- Lazy evaluators processing items one by one
+- Avoid creation of temporary collections
+
+### Functions
+- **Intermediate** - Process one object, pass to terminal
+- **Terminal** - Add to result
+
+### Example Comparison
+
+**Collections (creates intermediate lists):**
+```kotlin
+val list = (1..1_000_000).toList()
+val result = list
+    .filter { it % 2 == 0 }   // Intermediate list 1
+    .map { it * 2 }           // Intermediate list 2
+    .take(10)                 // Intermediate list 3
+    .toList()
+```
+
+**Sequences (no intermediate lists):**
+```kotlin
+val sequence = (1..1_000_000).asSequence()
+val result = sequence
+    .filter { it % 2 == 0 }  // Intermediate
+    .map { it * 2 }          // Intermediate
+    .take(10)                // Intermediate
+    .toList()                // Terminal
+```
+
+---
+
+## Side Effects
+
+### LaunchedEffect
+- Triggered when key value changes
+- Utilizes CoroutineScope for IO operations
+
+### DisposableEffect
+- Similar to LaunchedEffect but without CoroutineScope
+- Used for lifecycle events
+- `onDispose` is mandatory
+
+---
+
+## Flows
+
+### Flow Characteristics
+- Stream of data flowing through a pipe
+- **Hot flows** - Active everytime
+- **Cold flows** - Work only when collected
+- Not lifecycle-aware
+- Best for complex async coroutine calls
+
+### Flow Components
+- **Producer** - Emits data using `emit()`
+- **Intermediaries** - Optional, can modify emitted data
+- **Consumer** - Uses `collect()` to get flow output
+
+### Resources
+- [Consuming Flows Safely in Jetpack Compose](https://medium.com/androiddevelopers/consuming-flows-safely-in-jetpack-compose-cde014d0d5a3)
+- [Building Efficient API Calls](https://medium.com/@devarshbhalara3072/building-efficient-api-calls-in-android-with-retrofit-coroutines-flow-and-dependency-injection-60e022b16987)
+
+---
+
+## Coroutines
+
+> 📚 Reference: [Coroutines on Android Part I](https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb)
+
+---
+
+## ViewModel
+
+### Best Practices
+- Use `job { ViewModelScope.launch() }` to cancel long-running background jobs
+- Implement immutability pattern:
+
+```kotlin
+private val _isLoading = MutableLiveData<Boolean>()
+val isLoading: LiveData<Boolean> = _isLoading
+```
+
+### Resources
+- [CoroutineScope & CoroutineContext Deep Dive](https://medium.com/@paritasampa95/coroutinescope-coroutinecontext-discussed-in-depth-to-understand-better-part-2-550dbc7af3d2)
+- [Additional ViewModel Resources](https://x.com/nagataro_san475/status/1875593012648276202)
+
+---
+
+## Workers Android
+
+> 📚 Reference: [Work Manager Android](https://medium.com/@appdevinsights/work-manager-android-6ea8daad56ee)
+
+### Use Cases
+- Tasks that run even when app is killed
+- Scheduled tasks without user interaction
+- Examples: database sync, daily APIs
+
+### Benefits
+- Periodic workers
+- Add constraints (low battery, network)
+- Chain workers together
+- Backoff policy for failed tasks
+- Automatic threading and coroutines
+
+---
+
+## Suspend Coroutines
+
+### Types
+1. **suspendCoroutine & suspendCancellableCoroutine**
+   - Callback-based coroutines
+   - Return results based on success/failure callbacks
+   - Pause → Wait for callback → Resume with result/exception
+
+2. **CompletableDeferred**
+   - Waits for function completion
+   - Different from suspend coroutines
+   - Used with legacy callback-based APIs
+
+---
+
+## BroadCasts
+
+> 📚 Reference: [Understanding Broadcast Receivers](https://medium.com/@khush.panchal123/understanding-broadcast-receivers-in-android-044fbfaa1330)
+
+### Types of Broadcasts
+
+1. **Static/Manifest Broadcasts**
+   - Defined in manifest
+   - Can trigger `onCreate()` on application context
+
+2. **Context/Dynamic Broadcasts**
+   - Registered based on activity context
+   - Must be unregistered when not needed
+
+### Key Concepts
+- Broadcasts sent/received as intents
+- Can be made locally within app
+- `RECEIVER_EXPORTED` flag required for custom broadcasts
+
+### Pending Intents
+- [Pending Intent in Android](https://medium.com/@appdevinsights/pending-intent-in-android-fc93a8b6c2ac)
+- Given to Android system APIs to work upon and send data back
+
+**Types:**
+- `PendingIntent.getActivity()` - Start an Activity
+- `PendingIntent.getBroadcast()` - Perform a Broadcast
+- `PendingIntent.getService()` - Start a Service
+
+### Example Implementation
+
+```kotlin
+// Receiver for SMS response
+context.registerReceiver(object : BroadcastReceiver(){
+    override fun onReceive(p0: Context?, intent: Intent?) {
+        if (intent?.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
+            val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
+            for (sms in messages) {
+                val sender = sms.originatingAddress
+                if (sender?.replace("+", "")?.contains(phoneNumber.replace("+", "")) == true) {
+                    onSuccess()
                 }
-
-            },IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION),Context.RECEIVER_NOT_EXPORTED)
-
-
-
-DataBase 
-
-   /**
-    * * {https://developer.android.com/static/images/training/data-storage/room_nested_relationships.png}
-    * * https://medium.com/androiddevelopers/database-relations-with-room-544ab95e4542
-    *
-    * * Unitl now i have used , map for storing and mapping infraObjects to it's ids . the map is singleton object which not life
-    *   cycle aware and is mutable also .
-    * * the data of infra connect specially for spaces is special as one space has multiple childspaces and nested data like that ,
-    *   here we can easily say that this one to many relationship .
-    * * Refer to post for mor info , normally for sqlite we have to run two queries . first to get all infraobjects and then get all rows from
-    *   db to get infraobjects related to that id .
-    * * In Room we can use @Relation to tell room that one parameter in parent is corresponding to one parameter in child to
-    *   get list of children at once
-    * * Here we don't require that because same data class is used , we can just run queries simply for both way mapping
-    */
-
-   2. remember that whenever you make changes into your schema like adding/deleting column, creating new table .. you have to migrate to newer version of db and whenever that            happens make sure to tell your db class all changes on onUpgrade() callback for sql lite . also what happens for ex user has db version 1 and both version 2, version 3 and         version 4 have modified the schema by anymeans so when user updates app , first inupdate will go for version 2 then version3 and version 4 ... executing all the updates and        changes said there and does not skip any migration changes , also check if you are not adding same column again before upfrading.
-   3. for db migration on room :-https://medium.com/androiddevelopers/understanding-migrations-with-room-f01e04b07929
-   4. Why is Database Migration Necessary?
-         Schema Evolution
-         Apps need to update database structure as features change
-         Allow adding new tables or columns without losing existing data
-         Data Preservation
-         Migrate existing user data to new schema
-         Prevent data loss during app updates
-         Restructure database for better query performance
-         Remove deprecated columns or tables
-   5. When is onUpgrade() Called?
-         onUpgrade() is called when the database version number in your SQLiteOpenHelper changes
-         Specifically, when you increase the version number in the SQLiteOpenHelper constructor
-         This happens when you want to modify your database schema (add/remove tables, change column types)
-         
-      Where are Old and New Versions Fetched?
-         
-         Old Version: Comes from the existing database file on the user's device
-         New Version: Defined in your current code's database helper class
-         The version comparison happens automatically by the Android SQLite framework
-   6. always keep database single in app don't create different databases , you can create different table within them .
-   7. for Room db with sql injection , to create db for multiple users is to create different tables with names like TABLE_NAME+user_id and as userId changes , db changes and gets       created .
-   8. withTransaction is an extensiuon function inside the room-ktx library which allows to operate multiple db queries sequentially  , like you want to refresh db . so
-      
-            db.withTransaction{
-               db.claer()
-               db.insert() // if this fails then the clear() query is also called off and db is restored 
             }
-      this allows to make sure our db data is safe even if something goes wrong.
-      Yes, clear() does remove everything from the database immediately. But here's the key part:
-      Where does the rollback data come from?
-      SQLite maintains a rollback journal (or WAL - Write-Ahead Log in WAL mode) that contains:
-      
-      Before-images: The original data before each change
-      Undo operations: Instructions on how to reverse each change
-      
-      So when clear() executes:
-      
-      SQLite first writes all the existing data to the rollback journal
-      Then it deletes the data from the main database
-      If insert() later fails, SQLite reads from the rollback journal to restore the original data
-   10. so what does sql in room does is that it stores a journal logs of the queries it ran like if it deleted some data , it stores that in disk . this also is done in paging-cache way          to avoid lockdowns and heavy db time taking .
+            context.unregisterReceiver(this)
+        }
+    }
+}, IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION), Context.RECEIVER_NOT_EXPORTED)
+```
 
+---
 
-Caching
-   1. There are 3 types of caching used in android :-
-      a. using shared presferences , in this we use key-value pair to store value in android for local caching 
-      b. using Room/sql database , simple use case like local db
-      c. Lru cache based , notstudied yet .
-   2. so in case of thes local storing data , we can get confused with that it is basically storing data but what we can do is that add some case/condition so that data becomes expires:-
-      Make it "cache-like" through Time limit , size limits, automatic cleanup, and clear separation from persistent data in your architecture.
-      
+## Database
 
+### Room Database Relationships
 
-Testing
+> 📚 References:
+> - [Room Nested Relationships](https://developer.android.com/static/images/training/data-storage/room_nested_relationships.png)
+> - [Database Relations with Room](https://medium.com/androiddevelopers/database-relations-with-room-544ab95e4542)
 
-   https://testing.googleblog.com/2010/12/test-sizes.html
+### Database Migration
 
-   1. Remote DataSource Testing [Retrofit] - Mockserver | Fakes | Mocks
-   2. Local DataSource database [Room] - Android X Test | Robolectric 
-   3. Local DataSource Prefs [SharedPrefernces] - Android X Test | Robolectric 
-   4. Local DataSource Store [DataSource] - Android X Test | Robolectric 
-   5. Repository Layer | UseCases | business-logic  - JUnit 4/5 | Fakes | Mocks
-   6. ViewModel & LiveData - Android X Test | Robolectric 
-   7. Navigation [Navhost|Intents] - Android X Test | Robolectric 
-   8. View & Animations [Activity|Fragments|CustomViews] - Espresso|Barista Instrumentation
-   9. Notifications Test - Instrumentation and ADB
-   10. Broadcast Test - Instrumentation and ADB
-   11. Content provider - Instrumentation and ADB
-   12. Firebase Testing(depends on things you are testing) - Espresso|Barista Instrumentation | Android X Test | Robolectric | ADB
+> 📚 Reference: [Understanding Migrations with Room](https://medium.com/androiddevelopers/understanding-migrations-with-room-f01e04b07929)
 
-remember to make a interface repo which is then used by 2 different repositories :-
-   a. first repo is used by viewmodel to make api , db calls
-   b. second repo is fale repo or kind of mock one which allows to emit or set any value we  want for testing purposes .
-   1.  to test suspend functions using runTest{} to run coroutine functions , this allows to skip any time delay there is in suspend function
-   2.  runTest makes a TestScope which is similar to CoroutineScope for a coroutine , default dispatcher for runTest is StandardTestDispatcher
-   3.  use advanceUntilIdle() to make sure all coroutines work and free the test coroutines
-       a. if we are starting new coroutines from top level testing coroutines then we need to use TestingDispatchers to schedule the new coroutines
-       b. also when switching to different dispatcher using withContext , we need
-   4.there are 3 tests - ui(requires user input) , unit (no need of emulator and ui , ex:- db functions , api calls ) and integration ( normal view stuff which doesn't requires
-      user input but still needs emulator)
-   
-    No 1 theory of TDD best practice is
-   
-   “Write test cases before the function implementation”
-   
-   
+#### Why Migration is Necessary
+- **Schema Evolution** - Update database structure as features change
+- **Data Preservation** - Migrate existing user data to new schema
+- **Performance** - Restructure database for better query performance
 
-1. Unit Testing
+#### When onUpgrade() is Called
+- When database version number in SQLiteOpenHelper changes
+- When you increase version number in constructor
+- When modifying database schema
 
-   a. These are steps to follow
-         Write your function signature
-         Write test case for what that function is going to do and what you expect from it .
-         Write function logic so test case passes.
-         This procedure is carefully followed when writing unit tests and recommended for Integration and UI testing as well.
-   
-   c. Robolectric.setupActivity. You write a test case where you call MyActivity.onCreate to check that some preinitialisation is done when called. This test case will fail at    
-   super.onCreate call which is forced by android system.
-   
-   d. Mock will not help because you don't use a member variable which could be mocked.
-   
-   e. A Stub will not help because of the inheritance you can stub the onCreate method for you activity which makes testing pointless.
-   
-   f. You miss Spy but this will also not help because of the inheritance. With Spy can avoid the real onCreate call like stubbing but makes testing also pointless.
+#### Version Sources
+- **Old Version** - From existing database file on user's device
+- **New Version** - Defined in current code's database helper class
 
-   g. https://proandroiddev.com/understanding-the-role-of-mocks-and-spies-in-unit-testing-66e23b0e330b
-   
-   h. The Shadow can help at this situation. This handles more like a proxy. There can be an explicit proxy for each inherited class.
-    It can intercept each type of method call also for static methods. For you example we can create a proxy
-    for the android.app.Activity which will shadow the onCreate method and instead of throwing exceptions it
-    will do nothing... There you can save this event so you can later check that this super.method was called
-    with expected arguments if necessary
+### Best Practices
+- Keep single database per app with multiple tables
+- For multi-user apps: create tables with `TABLE_NAME + user_id`
+- Use `withTransaction` for atomic operations:
 
-3. Instrumented Testing
+```kotlin
+db.withTransaction {
+    db.clear()
+    db.insert() // If this fails, clear() is rolled back
+}
+```
 
-   a. that instrumentation testing is integration testing with the ability to control the life cycle and the events (onStart, onCreate etc) of the app.
-   b. To test UI that relies on the Android framework or system, such as Activities, Services, or UI elements. Tools used: AndroidJUnitRunner, Espresso, UI Automator.
-   c. testing a worker manager is kind of similar to ui testing , the main points would be that you have to test for a worker:-
-      i.   I'd like this to be done periodically
-      ii.  I'd want to be sure the device has an available network connection
-      iii. The device of user should have sufficient battery or is probably charging.
-      iv.  This task should be _re-doable_, i.e if the network fails, the task will run again.
+### Transaction Rollback
+SQLite maintains rollback journal with:
+- **Before-images** - Original data before each change  
+- **Undo operations** - Instructions to reverse each change
 
-4. UI Testing
-   a. createcomposeRule() a function that creates a test rule, which is used to initialize the Compose UI framework and provides utility functions for interacting with UI elements in your tests.
-   b. normally when tetsing a compose we can use createAndroidComposeRule() to help get acitvity context or lifecycles , it mocks the behaviour of activity itself
-   c. to test a compose you need to add testTag to the compose itself in the modifier where you are calling it , having composable as in activity .
+---
 
+## Caching
 
+### Types of Caching
 
-   
+1. **SharedPreferences** - Key-value pair storage
+2. **Room/SQL Database** - Local database storage
+3. **LRU Cache** - Least Recently Used cache
 
-    
+### Making Cache-like Behavior
+Add conditions for data expiration:
+- Time limits
+- Size limits  
+- Automatic cleanup
+- Clear separation from persistent data
+
+---
+
+## Testing
+
+> 📚 Reference: [Test Sizes](https://testing.googleblog.com/2010/12/test-sizes.html)
+
+### Testing Categories
+
+#### Remote DataSource Testing [Retrofit]
+- Mockserver | Fakes | Mocks
+
+#### Local DataSource Testing
+- **Database [Room]** - Android X Test | Robolectric
+- **Preferences [SharedPreferences]** - Android X Test | Robolectric  
+- **DataStore** - Android X Test | Robolectric
+
+#### Business Logic Testing
+- **Repository Layer | UseCases** - JUnit 4/5 | Fakes | Mocks
+
+#### UI & Integration Testing
+- **ViewModel & LiveData** - Android X Test | Robolectric
+- **Navigation** - Android X Test | Robolectric
+- **Views & Animations** - Espresso | Barista Instrumentation
+- **Notifications** - Instrumentation and ADB
+- **Broadcasts** - Instrumentation and ADB
+- **Content Provider** - Instrumentation and ADB
+- **Firebase** - Depends on component being tested
+
+### Testing Best Practices
+
+#### Repository Pattern for Testing
+Create interface repository used by:
+1. **Production repository** - Used by ViewModel for API/DB calls
+2. **Fake/Mock repository** - Emits/sets values for testing
+
+#### Testing Suspend Functions
+- Use `runTest {}` to run coroutine functions
+- Skips time delays in suspend functions
+- Creates TestScope similar to CoroutineScope
+- Use `advanceUntilIdle()` to ensure all coroutines complete
+
+#### Test-Driven Development (TDD)
+**Golden Rule:** "Write test cases before function implementation"
+
+**Process:**
+1. Write function signature
+2. Write test case for expected behavior
+3. Write function logic to pass tests
+
+### Test Types
+
+1. **Unit Tests** - No emulator/UI needed (DB functions, API calls)
+2. **Integration Tests** - Normal view testing without user input (requires emulator)
+3. **UI Tests** - Requires user input testing
+
+#### Unit Testing Challenges
+
+**Problem:** Testing Android components like `Activity.onCreate()`
+- Mock/Stub won't help due to inheritance
+- Spy won't help due to inheritance
+
+**Solution:** Use **Shadow** (proxy pattern)
+- Intercepts method calls including static methods
+- Can shadow `onCreate()` method to do nothing instead of throwing exceptions
+- Saves events for later verification
+
+#### Instrumented Testing
+- Integration testing with lifecycle and event control
+- Tests UI relying on Android framework
+- Tools: AndroidJUnitRunner, Espresso, UI Automator
+
+#### Worker Testing
+Test worker for:
+- Periodic execution
+- Network connection constraints
+- Battery/charging constraints
+- Re-doable on failure
+
+#### UI Testing with Compose
+- Use `createComposeRule()` for Compose UI framework initialization
+- Use `createAndroidComposeRule()` for activity context/lifecycle
+- Add `testTag` to composables in modifier for testing
+- Place composable in activity for testing
+
+---
+
+This README provides comprehensive coverage of Android development concepts, from basic Kotlin fundamentals to advanced testing strategies. Each section includes practical examples and references for deeper learning.
