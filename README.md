@@ -23,6 +23,24 @@ Pagination
          b. We a mediator to handle this data exchange , we also use caching (small db) handling for ui loading . 
    2. Cursor based implementation is basically we use when an id or key in our request to basically help lower the load of requests , these ids can be timetamp based , sequential            based , based on other indicators .
         a. time stamp is sort of like newerThan and return that time from last request , same goes for when we want to request data after previous id (sequential)
+
+Memory Leaks (https://proandroiddev.com/everything-you-need-to-know-about-memory-leaks-in-android-d7a59faaf46a)
+   1. there are 3 major components in android system which handles memory management in android :
+            a. Garbage Collector ( process by JVM ) -> it's role is free up space and allocate that free space/memory to other ongoing process
+            b. Stack -> it's the data structure which keep static memory , it's a part of RAM , in short terms stack keeps track of all the process started in app with LIFO (Last                          in first out ) policy  , it stores reference to object allocated in the heap .
+            c. Heap -> it's a dynamic memory sytem which is used by JVM to allocate the object classes which are create and referenced by stack for accessing the process 
+   2. the JVM has made a superhero for helping us. We called it the Garbage Collector. He is going to do the hard work for us. And caring about detecting unused objects, release         them, and reclaim more space in the memory.
+   3. A memory leak happens when the stack still refers to unused objects in the heap ,  we see that when we have objects referenced from the stack but not in use anymore. The           garbage collector will never release or freeing them up from the memory cause it shows that those objects are in use while they are not.
+   4. there are some ways we can cause memory leaks :-
+            a. No proper life cycle management of background workers :- if we start a background work which takes 20 secs but user goes back / rotate screen still the old work
+               will be in going on for 10 secs which is stored by heap , even if going back/rotate screen allows removal of that method from stack but still that object used is in                heap.
+            b. Wrong uses of activity - context :- whenever we use activity context exspecially for toasts,singleton or other long period works , always use application context                   (getApplicationContext) which even if user is on another screen or configuration changes , the heap is till refernced which allows the GC to remove it .
+   5. memory leaks can cause :-
+            a. lags in the app :- due to memory leaks the load on GC increases as well which causes the app to be laggy , if we want to achieve 60fps for the app which we have to 
+               render frame every 1/60 sec which allows not a big window for gc operation .
+            b. ANR(app not responsive):- if ui thread is blocked then app returns this ANR.
+            c. Out of memory :-  this happens when JVM can not allocate more object memory into the heap , as each heap has it's own maximum size limit .
+            
         
 
 Notifications
@@ -359,7 +377,8 @@ remember to make a interface repo which is then used by 2 different repositories
    a. createcomposeRule() a function that creates a test rule, which is used to initialize the Compose UI framework and provides utility functions for interacting with UI elements in your tests.
    b. normally when tetsing a compose we can use createAndroidComposeRule() to help get acitvity context or lifecycles , it mocks the behaviour of activity itself
    c. to test a compose you need to add testTag to the compose itself in the modifier where you are calling it , having composable as in activity .
-   d. 
+
+
 
    
 
