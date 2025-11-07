@@ -41,6 +41,15 @@ Memory Leaks (https://proandroiddev.com/everything-you-need-to-know-about-memory
                render frame every 1/60 sec which allows not a big window for gc operation .
             b. ANR(app not responsive):- if ui thread is blocked then app returns this ANR.
             c. Out of memory :-  this happens when JVM can not allocate more object memory into the heap , as each heap has it's own maximum size limit .
+
+
+
+Navigation with compose :-
+   1. the best way to navigate in compose is to use evetn based navigation using compose :-
+      a. decouples compose with nvacontrollers
+      b. can be controlled with the use of flows 
+      c. dont store navcontroller or make navigations in viewModel
+      d. keep observing events of navigation near NavHost then use navigation there .
             
         
 
