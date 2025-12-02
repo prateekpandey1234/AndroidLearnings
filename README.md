@@ -9,7 +9,7 @@
 
 #System design posts
 1. https://drive.google.com/file/d/1QvoANh5W3dYEqZtoshLswHmPlSKcymE6/view?usp=sharing - whatsapp
-2. 
+2. https://drive.google.com/file/d/1GYN25_UcDKAEeDuVzT2M5GuufgrJosAv/view?usp=sharing -  instagram stories
 
 
 
