@@ -5,8 +5,11 @@
 4. https://artem-goncharov.medium.com/grokking-the-mobile-system-design-interview-6a06fa94491b 
 
 
+
+
 #System design posts
-1. 
+1. https://drive.google.com/file/d/1QvoANh5W3dYEqZtoshLswHmPlSKcymE6/view?usp=sharing - whatsapp
+2. 
 
 
 
