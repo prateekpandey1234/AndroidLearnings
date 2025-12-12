@@ -130,6 +130,7 @@ State Hoisting in compose
       using normal remember will cause mulitple recomposition so we use derived state which creates a new state itself to stop those extra recompositions .
       (https://medium.com/androiddevelopers/jetpack-compose-when-should-i-use-derivedstateof-63ce7954c11b)
    9. you can use remember(key1,key2) to assign that data against that specific id or rememberSaveable(key1) to survive more
+      
    
 Observers
    1. there are 4 types of observers : Live Data , StateFlow , Flow and SharedFlow
@@ -186,6 +187,47 @@ Flows
    5. https://medium.com/@devarshbhalara3072/building-efficient-api-calls-in-android-with-retrofit-coroutines-flow-and-dependency-injection-60e022b16987
    6.  always remember to add flow as an lifecycleaware component
    8.  flow is a one timer thing doesn't hold the state or any data , if reset it will go to orginal data before changing
+   9.  you can also make the app as single source of truth , like only place can handle data :-
+   //making flow as single source of truth 
+    suspend fun getChannelMessage(context: Context,channelId:Long) : Flow<NoticeBoardResource<List<ChannelMessage>>> = flow {
+
+        try {
+            val sqliteHelper = App.getSqliteHelper(forUserId)
+            db = sqliteHelper.mOpenHelper
+        } catch (e: java.lang.Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            e.printStackTrace()
+        }
+        val academicYear = getCurrentYear(context)
+
+        val First_time = db?.hasData(channelId,academicYear)    ?:true
+        if(First_time)emit(NoticeBoardResource.Loading(ResponseType.FIRST_LOAD))
+        else emit(NoticeBoardResource.Loading(ResponseType.DELTA))
+
+        repositoryScope.launch {
+            if(First_time){
+                val ServerResponse = getChannelMessagesApiFirstLoad(channelId,academicYear,context)
+                emit(ServerResponse)
+            }
+            else{
+                val LocalResponse = getChannelMessagesDb(channelId,academicYear,context)
+                emit(LocalResponse)//emitting local data first
+                when(LocalResponse){
+                    is NoticeBoardResource.Error->{
+                        //already emiited
+                    }
+                    is NoticeBoardResource.Success->{
+                        val newerThanId = LocalResponse.data?.get(0)!!.messageId
+                        val serverResponse = getChannelMessagesApiDelta(channelId,academicYear,newerThanId,context)
+                        emit(serverResponse)//then emit delta data
+                    }
+                    else ->{
+                        // already loading
+                    }
+                }
+            }
+        }
+    }
 
 Coroutines
    1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
