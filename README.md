@@ -227,7 +227,9 @@ Flows
                 }
             }
         }
-    }
+      } 
+   11. produceState -> a extension fucntion used to generate state of non state aware components , mostly it's used to convert flow as state flow . https://medium.com/@ramadan123sayed/understanding-producestate-in-jetpack-compose-principles-and-best-practices-for-2025-df8b43d02e98
+
 
 Coroutines
    1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
