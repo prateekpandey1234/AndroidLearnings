@@ -234,6 +234,81 @@ Flows
 Coroutines
    1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
 
+Semaphore
+   1. sample code -> https://gist.github.com/prateekpandey1234/62b4c856a9e1d6d1c54d2f1f46090726
+   
+   2. It is essentially a counter that controls access to a shared resource.
+
+      Think of it like a Nightclub Bouncer with a clicker counter.
+      
+      1. The Analogy: The Nightclub Bouncer
+      The Club Capacity: The club only holds 2 people (Semaphore(2)).
+      
+      The Line: There are 10 people (coroutines) wanting to get in.
+      
+      The Counter: The bouncer holds a counter starting at 2.
+      
+      How it works:
+      
+      Person A arrives: The bouncer checks the counter (it's 2). Since it's > 0, he lets Person A in and decrements the counter to 1.
+      
+      Person B arrives: The bouncer checks the counter (it's 1). He lets Person B in and decrements the counter to 0.
+      
+      Person C arrives: The bouncer checks the counter (it's 0). He says "Stop! Wait here." Person C has to stand in line (suspend) and cannot enter.
+      
+      Person A leaves: Person A finishes partying and leaves. The bouncer increments the counter to 1.
+      
+      Person C enters: The bouncer sees the counter is now 1. He waves Person C in and decrements it back to 0.
+      
+      2. How does it know "When to permit"?
+      The Semaphore does not look at the parent coroutine, the scope, or the thread. It only looks at its own internal integer variable (the "permits").
+      
+      It uses two fundamental operations:
+      
+      acquire() (The Check):
+      
+      It looks at the internal number.
+      
+      If Number > 0: It decreases the number by 1 and lets your code run immediately.
+      
+      If Number == 0: It pauses (suspends) your coroutine right there. Your code stops executing line-by-line until the number becomes positive again.
+      
+      release() (The Signal):
+      
+      It increases the internal number by 1.
+      
+      It checks if anyone is waiting. If yes, it wakes up the first person in line.
+      
+      3. Does it check the Parent Scope?
+      No. The Semaphore is a completely independent object.
+      
+      You create it once: val mySemaphore = Semaphore(2).
+      
+      You pass this specific object to your coroutines.
+      
+      Any coroutine that calls mySemaphore.withPermit { ... } is checking that specific object's counter.
+      
+      It doesn't matter if the coroutines are siblings, children, or completely unrelated. As long as they all look at the same Semaphore variable, they will respect the limit.
+      
+      Visualizing Your Code
+      When you wrote downloadSemaphore.withPermit { ... }, this is what happens under the hood:
+      
+      Kotlin
+      
+      // 1. Coroutine reaches this line
+      downloadSemaphore.acquire() // <-- SUSPEND HERE if counter is 0.
+      
+      try {
+          // 2. Run your code (Download the file)
+          startJob(job)
+      } finally {
+          // 3. ALWAYS run this when finished (even if error)
+          downloadSemaphore.release() // <-- Increases counter, wakes up next guy
+      }
+      Because withPermit wraps your code in try/finally, it guarantees that even if your download crashes, the "bouncer" will still increment the counter so the line keeps moving.
+
+
+
 
 ViewModel
    1. use job{ ViewmodelScope.launch()} , to cancel any type of long running jobs running in the background like fetching and processing data
