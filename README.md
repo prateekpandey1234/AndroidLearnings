@@ -453,6 +453,17 @@ BroadCasts (https://medium.com/@khush.panchal123/understanding-broadcast-receive
             },IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION),Context.RECEIVER_NOT_EXPORTED)
 
 
+Storage 
+ 1. https://sharma-labhya.medium.com/understanding-android-storage-3d240ff59959
+ 2. there are two types of storage :- internal and external storage .
+ 3. internal storage is only for app storage which is private to the app itself , Internal Storage
+      The system prevents other apps from accessing these locations, and on Android 10 (API level 29) and higher, these locations are encrypted.
+      
+      External Storage
+      It’s possible for another app to access these directories if that app has the proper permissions, the files stored in these directories are meant for use only by your app.
+ 4. scoped storage -> https://medium.com/microsoft-mobile-engineering/scoped-storage-in-android-10-android-11-28d58d989f3c
+
+
 
 DataBase 
 
