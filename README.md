@@ -404,6 +404,13 @@ ViewModel
        val isLoading  :LiveData<Boolean> = _isLoading
       this allows immutablitiy of isLoading by outer access , only edited inside the viewModel even when _isLoading is mutable
 
+
+Use case
+   1. explained in the gist https://gist.github.com/prateekpandey1234/c8b1e70cb92fca7c1a67c9849ddb96d5
+   2. used between repo and viewmodel to handle business logic
+
+      
+
 Workers Android(https://medium.com/@appdevinsights/work-manager-android-6ea8daad56ee)
    1. workers are android based api used to run tasks even when app is killed or tasks which needs to scheduled , user doesn't has any interaction during this process and 
       ex:- data base cync , daily regular apis
