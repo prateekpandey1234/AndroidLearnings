@@ -534,6 +534,35 @@ Caching
       c. Lru cache based , notstudied yet .
    2. so in case of thes local storing data , we can get confused with that it is basically storing data but what we can do is that add some case/condition so that data becomes expires:-
       Make it "cache-like" through Time limit , size limits, automatic cleanup, and clear separation from persistent data in your architecture.
+
+      
+LRU cache :- https://medium.com/@lakshyasukhralia/internals-of-lru-cache-in-android-957907aef28f
+   1. this is a hashmap based data structure which can eject the data based last time it was accessed , that allows to show the data first which user is trying to see first
+   2. cache.put( "A" , 0 ) // [A]
+     cache.put( "B" , 0 ) // [A, B]
+     cache.put( "C" , 0 ) // [A, B, C ]
+     cache.put( "D" , 0 ) // [A, B, C, D]
+     cache.put( "E" , 0 ) // [A, B, C, D, E] - from A to E Caching complete
+     cache.put( "F" , 0 ) // [B, C, D, E, F] - cache F, then A is evicted
+     cache.put( "D" , 0 ) // [B, C , E, F,D] - Recaching D changes it to the last referenced state
+     println(cache.snapshot().keys) 
+     cache. get ( "C" ) // [B, E, F, D, C] - When accessing cached data through C, change to the most recently referenced state
+     println(cache.snapshot().keys) 
+     cache. get ( "B" ) 
+     println(cache.snapshot().keys) 
+    
+   // result
+    [B, C, E, F, D] 
+   // C moved backwards. 
+   [B, E, F, D, C] 
+   // B moved backwards. 
+   [E, F, D, C, B]
+   3. also this is basically utilise a linked list type of data structure which keep tracks of both it's head and tail at every position :-
+   <img width="973" height="892" alt="1_jWvycnKWW05sma0PJsHQuA" src="https://github.com/user-attachments/assets/c9814a7c-ad6b-4a15-897d-1637e11ae241" />
+   4. and the linkedHasmap is not thread safe , which means if there are mutliple consumers on different threads  , the linkedhashmap is not synchroized .
+      for that we have to wrap the Lru cache inside a synchronized (cache) 
+      
+
       
 
 
