@@ -12,6 +12,7 @@
 2. https://drive.google.com/file/d/1GYN25_UcDKAEeDuVzT2M5GuufgrJosAv/view?usp=sharing -  instagram stories
 3. https://drive.google.com/file/d/12eKJnjLsDZjg2XhXO4nTrt3qviAyCPSp/view?usp=sharing -  file downloading
    service code for that https://gist.github.com/prateekpandey1234/2fa9e587679eae5aa8950cf58e1b8559
+   
 
 
 
@@ -574,7 +575,13 @@ LRU cache :- https://medium.com/@lakshyasukhralia/internals-of-lru-cache-in-andr
    <img width="973" height="892" alt="1_jWvycnKWW05sma0PJsHQuA" src="https://github.com/user-attachments/assets/c9814a7c-ad6b-4a15-897d-1637e11ae241" />
    4. and the linkedHasmap is not thread safe , which means if there are mutliple consumers on different threads  , the linkedhashmap is not synchroized .
       for that we have to wrap the Lru cache inside a synchronized (cache) 
-      
+
+
+Disk caching : https://medium.com/@n20/image-caching-in-android-b3bacc34473c
+   1. this is the second level of caching where we can store the cached data /bitmaps in local storage file where we can store data .
+   2. this type of cache is very much similar to storing file local but this is cache at eod , can be evicted .
+   3. DiskLruCache IS local file storage. DiskLruCache: specialized code that manages files in a folder (e.g., /data/user/0/com.app/cache/images/).
+      Local File: standard code that manages files in a folder (e.g., /data/user/0/com.app/files/my_images/).
 
       
 
