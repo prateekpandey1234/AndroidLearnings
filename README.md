@@ -79,7 +79,16 @@ Content Delivery Network (CDN)
    5.  Fast Delivery: The edge server delivers the cached content, minimizing the physical distance data travels and reducing loading times (latency).
 
 Server Intiated Connections
-     
+   When there is need for instant fast connections between server and clients and  there is minimum latency required , server intiated connections are used , some are:-
+   1. polling , is like  normal method where clients asks server everytime for new data , but this is resource heavy and not good
+   2. long polling is similar to polling but here client waits for server response then asks again , this is better but still maintaing connection over long time is wrong .
+   3.  **Server Sent Events** , these are types of connections where clients makes an HTTP request and server sends data over time in a connection stream , even when there is no data
+      to send , server sends colon seperated comment line to keep the connection alive , under the hood :-
+
+      1. the clients sends request with GET http , with content type -> event-stream
+      2. then server sends data over time on this connection , whether colon separated dummy comments or actual updates from backend .
+   4. **WebSockets** are differents then SSE's as here we have a  two way communication rather than single way which helps better , also websockets are built on TCP (Transmission control protocol ) allows easy connection , handles connections error with retry mech and sends any missing or corrupted data.
+   
 
 
 
