@@ -37,6 +37,13 @@ Protocol Buffers:
    
   2. this also supports to multiple language , what happens is  we have our defined schema(model class in easy words) which is then compiled into any language model we want java ,py      etc .
   3. The generated code includes classes for  each message type, as well as methods for serialization and deserialization. These methods are optimized for efficiency and are used to      convert data between its in-memory representation and the serialized binary format.
+
+Content Delivery Network (CDN) 
+   1. is a global system of interconnected servers that quickly deliver web content (like images, videos, and web pages) by caching copies on servers closer to users, reducing    latency and improving website speed, performance, and reliability, while also offering security against attacks.
+   2. Instead of users fetching data from a single, distant origin server, a CDN directs them to the nearest "edge" server, making content load faster and handling high traffic more efficiently. 
+   3.  Caching: The CDN stores temporary copies (cached versions) of website assets (HTML, CSS, JavaScript, images, videos) on its globally distributed servers, called Points of Presence (PoPs) or edge servers.
+   4.  Proximity Routing: When a user requests content, the CDN identifies their location and routes the request to the nearest PoP.
+   5.  Fast Delivery: The edge server delivers the cached content, minimizing the physical distance data travels and reducing loading times (latency). 
      
 
 
