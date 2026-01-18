@@ -1,4 +1,4 @@
-#Android Interview Posts
+# Android Interview Posts
 1. https://kanchan-pal.medium.com/paypal-interview-experience-sde-3-a015695d0eba
 2.https://github.com/weeeBox/mobile-system-design
 3. https://gist.github.com/atierian/610538f39a4844881e20b673f4c8e8dc
@@ -7,7 +7,7 @@
 
 
 
-#System design posts
+# System design posts
 1. https://drive.google.com/file/d/1QvoANh5W3dYEqZtoshLswHmPlSKcymE6/view?usp=sharing - whatsapp
 2. https://drive.google.com/file/d/1GYN25_UcDKAEeDuVzT2M5GuufgrJosAv/view?usp=sharing -  instagram stories
 3. https://drive.google.com/file/d/12eKJnjLsDZjg2XhXO4nTrt3qviAyCPSp/view?usp=sharing -  file downloading
@@ -17,7 +17,7 @@
 
 
 
-#Android interview Experience
+# Android interview Experience
 1.https://medium.com/@himv1998 
 
 
@@ -25,7 +25,35 @@
 
 
 
+# System Design points 
+Going Offline First :-
+1. storing data locally first then showing to Ui , basically following SSOT pattern (single source
+    of truth)
+2. for local storage have a eviction policy , LRU (least recently used mostly size based) , TTL (time to 
+    live , daily how many data ?) , custom startegy 
 
+
+Optiimistic writes 
+1. When user interacts with our posts we basically run 2 parallel operations to enhance user experience :
+    a. the viewModel instanstly updates the UI as it shows the user interaction is done within milliseconds 
+    b. the viewModel also notifies repository to send a request to server for that interaction , both operations
+        are done in parallel
+
+2. For optimistic writes if there is unstable network or something goes wrong we do following steps:-
+    a. When the repo is notified about the interaction , we store it into a new Table in our local database 
+       which queues up all the interactions .
+    b. when the devices is connected to internet again , the repository then sends these interactions to the
+       server to sync the local db and server 
+    c. we use exponential backoff criteria here , after maximum attempts we  fail and reverse the UI changes 
+        and kindly notify the user if the change failled and was critical type of interaction
+
+Janky scrolling 
+1. the primary reason for it views are not recycled properly , when a view is not in use anymore , we basically move that
+    view into recycler pool so that other item can use it. this recycling decearses view creations and layout operations .
+2. secondary reason is loading data asynchrousouly on main thread , :
+    a. avoid loading huge image/video on even when user hasn't interacted with the item
+    b. move all loading and every api calls on background thread
+    c. have single state holder which helps avoiding extra retries and work when user scrolls .
 
 
 
