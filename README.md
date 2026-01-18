@@ -12,7 +12,12 @@
 2. https://drive.google.com/file/d/1GYN25_UcDKAEeDuVzT2M5GuufgrJosAv/view?usp=sharing -  instagram stories
 3. https://drive.google.com/file/d/12eKJnjLsDZjg2XhXO4nTrt3qviAyCPSp/view?usp=sharing -  file downloading
    service code for that https://gist.github.com/prateekpandey1234/2fa9e587679eae5aa8950cf58e1b8559
-   
+4. HLD for image loading functionality:- 
+   <img width="6953" height="3722" alt="system design " src="https://github.com/user-attachments/assets/f4714a11-b204-4c93-85de-4f5cecdb1d18" />
+5. HLD for News post / twitter like app :-
+   <img width="11823" height="5684" alt="Twitter Feed HLD" src="https://github.com/user-attachments/assets/fa9aace8-a8fe-4591-96cb-fcc1abebb848" />
+
+
 
 
 
@@ -71,7 +76,9 @@ Content Delivery Network (CDN)
    2. Instead of users fetching data from a single, distant origin server, a CDN directs them to the nearest "edge" server, making content load faster and handling high traffic more efficiently. 
    3.  Caching: The CDN stores temporary copies (cached versions) of website assets (HTML, CSS, JavaScript, images, videos) on its globally distributed servers, called Points of Presence (PoPs) or edge servers.
    4.  Proximity Routing: When a user requests content, the CDN identifies their location and routes the request to the nearest PoP.
-   5.  Fast Delivery: The edge server delivers the cached content, minimizing the physical distance data travels and reducing loading times (latency). 
+   5.  Fast Delivery: The edge server delivers the cached content, minimizing the physical distance data travels and reducing loading times (latency).
+
+Server Intiated Connections
      
 
 
