@@ -23,6 +23,25 @@
 
 
 
+
+
+
+
+
+
+
+# API'S
+Protocol Buffers:
+  1. this is a type of data endoing which to serialize and deserialize our data into binary format , mostly the data is turn in to Hexa decimal base format to enable fast parsing ,
+     small payload and secure data transmission between systems.
+   
+  2. this also supports to multiple language , what happens is  we have our defined schema(model class in easy words) which is then compiled into any language model we want java ,py      etc .
+  3. The generated code includes classes for  each message type, as well as methods for serialization and deserialization. These methods are optimized for efficiency and are used to      convert data between its in-memory representation and the serialized binary format.
+     
+
+
+
+
 # AndroidLearnings
 Normal kotlin stuff 
    1. a companion object is where we store static functions or classes  , static functions are those which don't need intialisation or anything to be accessible and run 
