@@ -140,6 +140,8 @@ Navigation with compose :-
 
 Notifications
 
+1. for push notifications , both android and IOS have their own device built in TCP , TLS(transport layer security) encryption which helps app's not having their own TCP connection     with third party PN providers like FCM and APNs
+
    Why Device Tokens Change:
    
       Security Enhancement - Tokens are rotated periodically to prevent unauthorized access and maintain security integrity
