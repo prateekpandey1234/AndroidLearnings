@@ -16,9 +16,32 @@
    <img width="6953" height="3722" alt="system design " src="https://github.com/user-attachments/assets/f4714a11-b204-4c93-85de-4f5cecdb1d18" />
 5. HLD for News post / twitter like app :-
    <img width="11823" height="5684" alt="Twitter Feed HLD" src="https://github.com/user-attachments/assets/fa9aace8-a8fe-4591-96cb-fcc1abebb848" />
-
-
-
+6. System design for stock trading app :-
+   Some bottle necks and optimization needed :-
+      1. when using web socket , stop the wss connection to disable any background real time updates when app is in the 
+         background
+      2. to demonstrate complex chart for stock pricing it's good to use :-
+          a. native app chart libs :- full control on behaviour, more of native ui feel and can use hardware acceleration for that> but it will cost you
+              extra development cost for both platforms and code duplication
+          b. webview based rendering :- Javascript based ( chartorgs) to enhance visulation and better chart rendering , no animation load on code , but 
+          still no control over the rendering and less native feel (zerodha use this)
+          c. thirdparty : again same as native but still no control and not safe
+      
+      3. the stock app needs bith type of api;s REST and WSS ( for reak time updates) 
+      4. using wss for relal time updates is good but , still there are challenges when you use that for chart implementation OR for any complex data:-
+          a. Direct UI update:- directly adding the data is smooth. and very responsive but still it will require constant animatiing and rendering from web
+              view time to time , this can cause overhead for memory 
+          b. buffered Ui update:- buffering /suspending updates for a while and then show them collectively lowers the load on the app and rendering 
+              but it can still kind of feel odd from user perspective , also the intervals have to carefully tuned to not miss any gap . 
+      5. processing any stock data should be done before sending it to the ui , the processing should be also done in background thread 
+          to allow low load on main thread.
+      6. for low battery and when server has high load , we should avoid any type of high ui process like animation and should use 
+          buffered approach there 
+      7. Implement caching to avoid any redudant operation when user reconnects or tries same ui , LRU seems better approach here 
+          user will try to interact stocks multiple times 
+      8. Use exponential backoff policy to keep retrying the connection upto a limit count , also clearly indicate to user when they 
+          are disconnected .
+         <img width="11284" height="5175" alt="sotck tradingpng" src="https://github.com/user-attachments/assets/63ec09bd-02e2-4152-908a-0111031f2a65" />
 
 
 
