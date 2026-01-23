@@ -44,6 +44,44 @@
          <img width="11284" height="5175" alt="sotck tradingpng" src="https://github.com/user-attachments/assets/63ec09bd-02e2-4152-908a-0111031f2a65" />
 
 
+7. System Design for Pagination Library:- 
+   1. We have choosen an interface class an skeleton architucture , which allows the devs   to test and allow more code visibility rather than squishing it in one place
+      
+   2. the interface class use Generic parameter as we have to support any data type pagination
+      
+   3. the interface has 3 methods :-
+          a. fetch is used by devs to directly fetch any specific paginated data , this doesn't support
+              pre fetching of next pages 
+          b. fetch around is used to fetch current and next possible pages too from the paginator, this
+              helps prefetching but might me slower 
+          c. clear is to remove any key paged data
+   4. each fetch has it's own priority , as use might scroll faster than you think , therefore we need 
+          fetch that data faster which is currently on user screen to avoid time wasting fetching previous poage 
+          data
+   5. direction is used to help have full control in which page direction does the dev wants to get data 
+   6. the pagination concept is both of the offset and cursor based can be used therefore , having next
+          and prev keys within same paged data is also helphull
+   7. PagedExecution is like a class which hold data and status of current process , which helps devs to
+          change UI based on the current process execution :loading success or error 
+   8. evictionTime is set within the paged data by page validator which is then accessed by those cache 
+          components which eveict on basis of that.
+   9. pagedDefaultConfig is used have more control on :-
+          a. thread where all executions will run .
+          b. maximum paralell calls being made if there are no paginated data and we have to make call to source .
+          c. eviction startegies for both cache management systems
+   10. Verions :- Semantic versioning(x.y.z)-->
+          a. Major change -> X.y.z
+          b. Minor change -> x.Y.z
+          c. patch.       -> x.y.Z
+   11. Paginator Scheduler :- this component is used to queue , load and    control the flow of paginated data throughout whole library
+   12. Paginator Data Source:- It can be either local or remote data source which reterives data paginated direct from source .
+   13. Paginator Validator :- it's more of used to add the eviction policies and page the data properly .
+   14. Paginator Cache:- both in memory cache and disk cache can be used depending on usage 
+      <img width="9951" height="5526" alt="Pagination library" src="https://github.com/user-attachments/assets/9069bb31-bd38-45c5-abd5-01a7755549a1" />
+
+
+
+
 
 # Android interview Experience
 1.https://medium.com/@himv1998 
