@@ -154,6 +154,47 @@ Server Intiated Connections
 
 
 
+
+
+
+
+# Compose Internals
+(https://drive.google.com/file/d/15IsHbXpyC8QswXnnjZwPH60kRGStH9MT/view?usp=sharing)
+(https://medium.com/androiddevelopers/under-the-hood-of-jetpack-compose-part-2-of-2-37b2c20c6cdd)
+1. jetpack compose is a declarative ui framework used  by kotlin and KMP developers , it is made up by 3 phases :-
+   i . composition:- where ui treee structuce is made and it tracks any recompisition in future , establishes the relationships between components
+   ii. layout :- designs the ui tree structuce and relationship in to architucture , decides size , position between the components 
+   ii. drawing:- here we render our components into the layout we determined .
+2. thre recomposition is triggered by 2 things :-
+   i. input changes :- when there is some in the input parameters function , the recomposition is triggered from compistion phase again .
+   ii. state changes :- any changes with those paramters which combinated  with remember delegate also cause recomposition , compose monitors theirs change in state too.
+3. internal working on compose functions :-
+   i. the functions which are anotated with @composable are compiled by Compose plugin compiler , the function itself is injected with composer object which contains information about the composition and track the it's state 
+   ii. this function is porcessed and added into Slot table data structuce which is a tree like data structure storing nodes of every UI component in the sub tree sepearately 
+   iii. this tree like behaviour then helps the compiler to find and recompose only those ui components which states are changed .
+   iv. the composer is then passed to the child composable inside the that compose , each composer has his own runtime generated UUID which allows more unique identification .
+   v. the remember invocations are those who store the states and compare the calculations between two states stored within those variables .
+4. the remember call is handled under hood by slot table differently , using that composer, the slot table tries to see if that UUID from compose has  a value , if not then we execute and store the initial value.
+5. the code is 
+         fun Counter() {
+            var count by remember { mutableStateOf(0) }  // THIS WORKS!
+             
+            Button(onClick = { count++ }) {
+                 Text("Clicked $count times")
+             }
+         }
+   
+   <img width="678" height="200" alt="Screenshot 2026-01-27 at 12 54 16 PM" src="https://github.com/user-attachments/assets/9157be2f-83f0-43fd-89e4-3bbb4712cf8c" />
+
+7. the flow is handled like in the following flow :-
+      i. the composer first see there is no value in slot table for that UUID and executes the initial lambda (by mutableStateOf(0)) and sets count as 0
+      ii. then when we change value of a state holding object , recomposition is triggerred which using
+      iii. the remember lambda function holds the previous state fed value , the compose then see that this remember lambda has some old value .
+      iv. then new value is set to count after execution.
+8. each remember acts like a slot in the slot table , every composer looks for theat slot position in the slot table if there was old value or not .
+
+   
+
 # AndroidLearnings
 Normal kotlin stuff 
    1. a companion object is where we store static functions or classes  , static functions are those which don't need intialisation or anything to be accessible and run 
