@@ -122,6 +122,16 @@ Janky scrolling
     c. have single state holder which helps avoiding extra retries and work when user scrolls .
 
 
+App startup optimization
+1. using porfetto , a tool which helps in tracing the time taken by our screens to start , this time is defined by firebase as duration when app Launcher is started and 
+   first activity "onResume" is called .
+2. there are several ways to improve start up time :-
+   i. Async process :- shifting all the API's and data calls to background thread is important as it will remove load from main thread and avoid it's blocking .
+      but als make sure that data is loaded before some other code tries to access it . (better to use viewmodel to handle that).
+   ii. lazy initialization:- only initializing those data / objects which are needed improves start up time by much more as it avoids multiple calls or process at the same time .
+   iii. Base line profiles:-
+
+
 
 
 # API'S
