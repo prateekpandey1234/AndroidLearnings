@@ -136,6 +136,9 @@ App startup optimization
    more on base line profiles (https://medium.com/@sahar.asadian90/baseline-profile-in-android-15c756619f5e)
    (https://engineering.fb.com/2025/10/01/android/accelerating-our-android-apps-with-baseline-profiles/)
 
+3. using system tracing like using CPU profiler , porfetto  we can trace the resouraces usage at every step of our app and check them one by one for any optimization.
+   (https://proandroiddev.com/android-app-startup-and-performance-optimisation-the-right-way-15f663208383)
+
 
 
    
