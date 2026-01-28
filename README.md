@@ -123,6 +123,7 @@ Janky scrolling
 
 
 App startup optimization
+
 1. using porfetto , a tool which helps in tracing the time taken by our screens to start , this time is defined by firebase as duration when app Launcher is started and 
    first activity "onResume" is called .
 2. there are several ways to improve start up time :-
@@ -138,6 +139,21 @@ App startup optimization
 
 3. using system tracing like using CPU profiler , porfetto  we can trace the resouraces usage at every step of our app and check them one by one for any optimization.
    (https://proandroiddev.com/android-app-startup-and-performance-optimisation-the-right-way-15f663208383)
+
+
+
+
+
+Security in Android Apps (https://gist.github.com/prateekpandey1234/b1107d222062dad8005e636d68536351)
+
+1. Every Android devixe has it's own keystore file when released on play store , that key store file is saved within TEE / SE , trusted execution enviroment , which is a safe hardware part isolated from Android OS and has it's own computer cycles and everyhting.
+2. even if the device is rooted , the TEE remains untouchable this is were we store the key store files , these key store files hold the encryption , decrytion and cipher algos to help secure our data
+3. if you use sharedperefernce normally without ciphering it , then it can be easily copied and accessed on rooted device even app's internal storage is not safe from it .
+4. there are 3 components for cipher algorithm :-
+   
+   i. Alogithm : this is the first main approach/language which tells the keystore how and what technique to use to encryp/decrypt the data , normally we use AES algo , Advanced Encryption Standard for android
+   ii. Blocks : whole byteArray can not be ciphered at once therefore we cipher it block by block (16 bytes of block) everytime , CBC cipher block chain is used to create those block which depend on previous chained block ciphering too.
+   iii. padding: when blocking a group of data is there some extra space is left like we were supposed to cipher 16 bytes we have only 5 byte now , then we add some dummy extra data at end to help ciphering .
 
 
 
