@@ -129,7 +129,9 @@ App startup optimization
    i. Async process :- shifting all the API's and data calls to background thread is important as it will remove load from main thread and avoid it's blocking .
       but als make sure that data is loaded before some other code tries to access it . (better to use viewmodel to handle that).
    ii. lazy initialization:- only initializing those data / objects which are needed improves start up time by much more as it avoids multiple calls or process at the same time .
-   iii. Base line profiles:-
+   iii. Base line profiles:-  we can precompile the the classes and files which are mostly used by the user to decerease the start up time , we keep records of the flow and screens which are being opened then using Base line profile module in android studio , we generate profile file and add it with our app release on play store .
+   more on base line profiles (https://medium.com/@sahar.asadian90/baseline-profile-in-android-15c756619f5e)
+   
 
 
 
