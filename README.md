@@ -144,6 +144,7 @@ App startup optimization
 
 
 
+
 Security in Android Apps (https://gist.github.com/prateekpandey1234/b1107d222062dad8005e636d68536351)
 
 1. Every Android devixe has it's own keystore file when released on play store , that key store file is saved within TEE / SE , trusted execution enviroment , which is a safe hardware part isolated from Android OS and has it's own computer cycles and everyhting.
