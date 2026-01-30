@@ -726,7 +726,13 @@ Storage
       
       External Storage
       It’s possible for another app to access these directories if that app has the proper permissions, the files stored in these directories are meant for use only by your app.
- 4. scoped storage -> https://medium.com/microsoft-mobile-engineering/scoped-storage-in-android-10-android-11-28d58d989f3c
+
+ 4. external storage before were emulated storage made on flash memory , pathing is named as (/emulated/0/) like this and earlier before android 10 , any app can access this external shared storage for other apps too by just storage permission
+ 5. Now after android 10 , all apps are mandatory to use scoped storage for external storage access , this scoping diables other apps to use your app data by providing islolated 
+    storage for them , but for this scoping storage is inreliable and can be unavailble sometime as the os might not be mounted porperly , in that case app get null value from OS 
+    for that file path .
+ 6. Using internal storage is better for private and reliable storage for every android device and it will work . but this internal storage is always limited & small  ,therfore unreliable for long files .
+ 7. scoped storage -> https://medium.com/microsoft-mobile-engineering/scoped-storage-in-android-10-android-11-28d58d989f3c
 
 
 
