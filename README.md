@@ -80,6 +80,44 @@
       <img width="9951" height="5526" alt="Pagination library" src="https://github.com/user-attachments/assets/9069bb31-bd38-45c5-abd5-01a7755549a1" />
 
 
+8. System design for Hotel booking app :-
+
+   <img width="11254" height="6195" alt="hotel booking system design" src="https://github.com/user-attachments/assets/9f235a53-8e70-463f-803f-933de50ab4e2" />
+   
+   1. the requirement here is to have a time window where user can book the hotel for that window :-
+   
+       a. until transaction status is either cancelled or completed , the room is temporarily locked 
+           for that requestId we made when posting the response.
+           
+       b. then when time is over , the locked room is available to other users as well then , all that matters 
+           whose request goes first to the server .
+   2. now this time feature is bad to be setup in client level as user can change local date time to throw that timer off or the app is minimized causing the timer to stop in  background or the latency between request and 
+       response from server can mismanage the given window.
+   3. therefore , the expired time is send  by the backend to be handled by the client , which makes sure that we always show the correct window remaining to user on phone , irregarding where app is closed or time setting is changed 
+   4. also we have to make sure about the uptime of app , as the time window will be like :-
+           timeStamp_from_backend - App_uptime , this way even if local time is changed , it can not change the up time value .
+   
+   5. Another feature required here is auto search feature , where search item will come as user types , we need to show list of data matching to it :-
+   
+       a. to do this , what we do is prefetch the popular locations (like top cities first , trending) when app is opened for the 
+           first time .
+           
+       b. this pre fetch helps to let user see someting before even typing which saves requests to the server initially ,
+       
+       c. also we will update our pre fetched data (cached) if the server indicates there are any changes or not .
+       
+       d. then also we don't want to query this data pre fetched cached data every time user types , this will cause
+           load on mobile and speed , there fore we give a brief pause of 200-300 ms when user stops typing .
+           
+       e. using android's App search we can fast up our auto search feture easily , Sqlite supports FTS easily .
+       
+       f. also when user searches some data that we have to fetch from server , we can save it into our cache with TTL expiration
+           principle .
+
+
+
+
+
 
 
 
