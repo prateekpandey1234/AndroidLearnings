@@ -115,6 +115,78 @@
            principle .
 
 
+9. System design for google drive app :-
+   
+      <img width="13783" height="5915" alt="google drive app" src="https://github.com/user-attachments/assets/ed9a5311-7603-475f-9a04-3688011288b9" />
+
+      1. the files need to be secure , therfore using app's  scoped external storage we can also use internal storage for smaller files too 
+      2. however to store the data models in db we have to use intneral storage which us by default done.
+      3. also we shoudl keep track how much of storage is filled and should show data to user if there was to be any limit , and we should download only after that.
+      4. Storing those file names by adding an identifier using the fileID at the end of file name.
+      1. For our file/folder upload system , we can have 2 types of upload method :-
+
+          a. /uploadtype=SingleTime , this allows the files with size less than 5 MB to
+              quickly upload without any pause/resume here .
+      
+          b. /uploadtype=Resumable, this allows full control from the user to pause, stop 
+              or cancel the upload specially for the files larger than 5 mb 
+      
+      2. here we can go with resumable style as we want full control from user to canel,stop
+          or resume downloads/uplaods
+      
+      3. what we will do is we will upload data chunk by chunk to the server while also keeping track
+          how much is left to upload .
+      
+      3. there will be 3 steps for our resumable process:-
+          
+          a. initiate upload : we send a request to server to tell what type , size , name and other 
+              meta data of file . then the server sends a response which tell the client app uploadId, what 
+              will be chunk count , size of each chunk and how much chunks are already uploaded 
+              for that uploadId. this helps to client app to synchronise the resume/pause operation by user .
+          
+          b. upload chucks: after first step we then start uploading our chunks in binary format and 
+              showing notification to user about the progress too , if process was interupted then we can 
+              continue from last uploaded to server (this is told by server in first step )
+          
+          c. finalize uplaod : after final chunk is upload , server check for integrity and send confirmation to 
+              the client app for it.
+      
+      4. the api for chunk upload will also have a header which will tell which part of file is uploading , 
+          also the backend will tell the client app when to stop the upload process when the user has
+          paused upload for long time .
+      
+      5. now another thing is when we move our upload process to the background thread and if the app goes in 
+          background then the uploading task might get terminated , there fore we should store the pending 
+          uploadRequests from server in db . everytime app is started we look for these pending uploads and 
+          start again . 
+      
+      6. Another thing is , when uploading we cache our local files , there fore we need to handle storage there
+          too , using exponential backoff delays with max retry attempts will also help in case of poor networking .
+      
+      7. app should also show notifications about upload , calculate how much is uploaded and show it to the user .
+          update ui also.
+      8. to handle verson conflicts , the best way is to use either :-
+          
+          a. LWW: last written wins , this make the last file version on server as the latest one without any conflicts
+          
+          b. version forking : keep both conficlting versions just change the name of other version by adding '(1)' in end 
+              like filename.png to filename (1).png .
+              
+          c. ask permission for either approach like if they want both , use version forking otherwise use LWW
+      
+      9. When storing the files , we should also consider encryptiong and decryption :-
+          
+          a. encrypting meta data about the file name , folder structures
+          
+          b. file themselves 
+      
+      10. using AES-256 algo for encrypting we can improve our encryption standard for the files, but another thing is 
+          for larger files , this might become resource heavy and memory consuming .
+
+
+      
+
+
 
 
 
