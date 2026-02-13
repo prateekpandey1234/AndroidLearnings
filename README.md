@@ -224,6 +224,7 @@ Optiimistic writes
         and kindly notify the user if the change failled and was critical type of interaction
 
 Janky scrolling 
+
 1. the primary reason for it views are not recycled properly , when a view is not in use anymore , we basically move that
     view into recycler pool so that other item can use it. this recycling decearses view creations and layout operations .
 2. secondary reason is loading data asynchrousouly on main thread , :
@@ -233,13 +234,26 @@ Janky scrolling
 
 
 ProGuard 
-1. proguard is a tool in android used to shrink size of apk , hide and rename classes , methods and files , removes unsed code when not needed .
-2. progaurd identifies and elimnate unused code , libs from app's bytecode reducing the size helping easy and fast download and smooth operation .
-3. by renaming the classes  or codebase in the build it helps protecting the codebase from hacker , while it can not stop reverse engineering . 
-4. for proguard we have to set minifyenbaled true , this tell app to use proguard , then add file which contains set of rules for the proguard . 
-5. -keepclassmembers class com.example.MyClass {     *; }  , keeping class members
-6. Keeping all classes in a package: -keep class com.example.mypackage.** { *; }
-7. using this proguard might also affect code and build so there is chance that we have to test build after changin proguard .
+
+   1. proguard is a tool in android used to shrink size of apk , hide and rename classes , methods and files , removes unsed code when not needed .
+   2. progaurd identifies and elimnate unused code , libs from app's bytecode reducing the size helping easy and fast download and smooth operation .
+   3. by renaming the classes  or codebase in the build it helps protecting the codebase from hacker , while it can not stop reverse engineering . 
+   4. for proguard we have to set minifyenbaled true , this tell app to use proguard , then add file which contains set of rules for the proguard . 
+   5. -keepclassmembers class com.example.MyClass {     *; }  , keeping class members
+   6. Keeping all classes in a package: -keep class com.example.mypackage.** { *; }
+   7. using this proguard might also affect code and build so there is chance that we have to test build after changin proguard .
+
+Reducing App size
+
+   1. Remove Unused Resources: Unused resources, such as images, layouts, or strings, unnecessarily inflate the APK or AAB size. Tools like Android Studio’s Lint can help identify these resources. After removing unused resources, enable shrinkResources in the build.gradle file to automatically remove unused resources during the build process.
+   2. Enable Code Shrinking with R8: the default code shrinker and optimizer for Android, eliminates unused classes and methods. It also obfuscates the code, making it more compact. Proper ProGuard rules ensure that critical code or reflection-based libraries are not removed.   
+   3. Use Resource Optimization : Optimizing resources, such as images and XML files, can significantly reduce the app size:
+      
+      i. Vector Drawables: Replace raster images (e.g., PNGs, JPEGs) with vector drawables for scalable graphics that take up less space.
+      ii. Image Compression: Use tools like TinyPNG or ImageMagick to compress raster images without noticeable quality loss.
+   4. Use Android App Bundles (AAB) : Switching to the Android App Bundle (AAB) format allows Google Play to deliver optimized APKs tailored to individual devices. This reduces the app size by including only the res   
+   5. Remove Unnecessary Dependencies : Examine the project’s dependencies and remove unused or redundant libraries. You can use the Gradle
+Dependency Analyzer in Android Studio to identify heavy libraries and transitive dependencies.
 
 
 
