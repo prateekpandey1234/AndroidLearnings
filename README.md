@@ -232,6 +232,17 @@ Janky scrolling
     c. have single state holder which helps avoiding extra retries and work when user scrolls .
 
 
+ProGuard 
+1. proguard is a tool in android used to shrink size of apk , hide and rename classes , methods and files , removes unsed code when not needed .
+2. progaurd identifies and elimnate unused code , libs from app's bytecode reducing the size helping easy and fast download and smooth operation .
+3. by renaming the classes  or codebase in the build it helps protecting the codebase from hacker , while it can not stop reverse engineering . 
+4. for proguard we have to set minifyenbaled true , this tell app to use proguard , then add file which contains set of rules for the proguard . 
+5. -keepclassmembers class com.example.MyClass {     *; }  , keeping class members
+6. Keeping all classes in a package: -keep class com.example.mypackage.** { *; }
+7. using this proguard might also affect code and build so there is chance that we have to test build after changin proguard .
+
+
+
 App startup optimization
 
 1. using porfetto , a tool which helps in tracing the time taken by our screens to start , this time is defined by firebase as duration when app Launcher is started and 
