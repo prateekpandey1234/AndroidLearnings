@@ -64,7 +64,7 @@
     }
 
     
-BroadCast Receivers 
+# BroadCast Receivers 
 
   1. A BroadcastReceiver is a component that allows your app to listen for and respond to system-wide broadcast messages or app-specific broadcasts. These broadcasts are typically triggered by the system or other applications to signal various events, such as battery status changes, network connectivity updates, or custom intents sent within an app. BroadcastReceivers are a useful mechanism for building responsive applications that react to dynamic system or app-level events . 
 
@@ -83,8 +83,52 @@ BroadCast Receivers
      
    
 
+# Content Providers (https://medium.com/@YodgorbekKomilo/understanding-and-implementing-content-providers-in-android-with-kotlin-and-jetpack-compose-b59f8bc32570)
+
+  1. A ContentProvider is a component that manages access to a structured set of data and provides a standardized interface for sharing data between applications. It serves as a central repository that other apps or components can use to query, insert, update, or delete data, ensuring secure and consistent data sharing across apps.
+  
+  2. ContentProviders are especially useful when multiple apps need access to the same data or when you want to provide data to other apps without exposing your database or internal storage structure.
+  
+  3. Purpose of ContentProvider: The primary purpose of a ContentProvider is to encapsulate data access logic, making it easier and more secure to share data across apps. It abstracts the underlying data source, which can be an SQLite database, file system, or even network-based data, and provides a unified interface for interacting with the data.
+  
+  4. A ContentProvider uses a URI (Uniform Resource Identifier) as its address for data access. The URI consists of:
+        1. Authority: Identifies the ContentProvider (e.g., com.example.myapp.provider).
+        2. Path: Specifies the type of data (e.g., /users or /products).
+        3. ID (optional): Refers to a specific item within the dataset.
         
-  
-  
+  5. onCreate(): Initializes the ContentProvider.
+    query(): Retrieves data.
+    insert(): Adds new data.
+    update(): Modifies existing data.
+    delete(): Removes data.
+    getType(): Returns the MIME type for the data.
+
+  6. To make your ContentProvider accessible to other apps, you must declare it in your AndroidManifest.xml file. The authority attribute uniquely identifies your ContentProvider.
+
+  7. You can use the ContentResolver class to interact with a ContentProvider from another app. TheContentResolver provides methods to query, insert, update, or delete data.    
+          val contentResolver = context.contentResolver
+
+          // Query data
+          val cursor = contentResolver.query(
+              Uri.parse("content://com.example.myapp.provider/users"),
+              null,
+              null,
+              null,
+              null
+          )
+          
+          // Insert data
+          val values = ContentValues().apply {
+              put("name", "John Doe")
+              put("email", "johndoe@example.com")
+          }
+          contentResolver.insert(Uri.parse("content://com.example.myapp.provider/users"), values)
+
+  8.  UseCases : 
+      Sharing data between different applications.
+      Initializing components or resources during the app startup process.
+      Providing access to structured data, such as contacts, media files, or app-specific data.
+      Enabling integration with Android’s system features, such as the Contacts app or File Picker.
+      Allowing data access with fine-grained security controls.          
 
   
