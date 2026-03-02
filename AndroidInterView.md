@@ -11,3 +11,14 @@ Fragment
   lifecycle of the Fragment’s View, which starts when the Fragment’s onCreateView is called and ends when
   onDestroyView is invoked. This allows you to bind UI-related data or resources specifically to the lifecycle of the
   Fragment’s View, preventing issues like memory leaks.
+
+Service 
+
+  1. A Service is a background component that allows an app to perform long-running operations independently of user interactions. Unlike activities, services do not have a user          interface and can continue running even when the app is not in the foreground. They are commonly used for background tasks such as downloading files, playing music, syncing      data, or handling network operations.
+  2. Started Service : A service is started when an application component calls startService(). It runs in the background indefinitely until it stops itself using stopSelf() or is explicitly stopped using stopService().Example Usage:Playing background music ,Uploading or downloading files . 
+  3.  Bound Service : A bound service allows components to bind to it using bindService(). The service remains active as long as there are bound clients and automatically stops when all clients disconnect. using this line specifically ,  override fun onBind(intent: Intent?): IBinder = binder
+  4. Foreground Service : A foreground service is a special type of service that remains active while displaying a persistent notification. It is used for tasks that require ongoing user awareness, such as music playback, navigation, or location tracking.
+  
+  
+
+  
