@@ -292,4 +292,71 @@
     ## Summary
     
     When configuration changes occur, the default behavior is to destroy and recreate the Activity, reloading resources to adapt to the new configuration. Developers can use `onSaveInstanceState()` to preserve transient UI state or a `ViewModel` for non-UI state. To avoid recreation, the `android:configChanges` attribute can be used in the manifest, delegating the responsibility to handle changes to the developer.
+
+
   
+# Android Accessibility Guide
+
+  1. Accessibility ensures that your application is usable by everyone, including people with disabilities, such as visual, auditory, or physical impairments. Implementing accessibility features enhances the user experience and ensures compliance with global accessibility standards, such as WCAG (Web Content Accessibility Guidelines).
+  
+  ## Leveraging Content Descriptions
+  
+  Content descriptions provide textual labels for UI elements, enabling screen readers like TalkBack to announce them to users with visual impairments. Use the `android:contentDescription` attribute for interactive or informational elements like buttons, images, and icons. If an element is decorative and should be ignored by screen readers, set `android:contentDescription` to null or use `View.IMPORTANT_FOR_ACCESSIBILITY_NO`.
+  
+  ```xml
+  <ImageView
+      android:contentDescription="Profile Picture"
+      android:src="@drawable/profile_image" />
+  ```
+  
+  ## Supporting Dynamic Font Sizes
+  
+  Ensure that your app respects the user's font size preferences set in the device settings. Use `sp` units for text sizes to automatically scale based on accessibility settings.
+  
+  ```xml
+  <TextView
+      android:textSize="16sp"
+      android:text="Sample Text" />
+  ```
+  
+  ## Focus Management and Navigation
+  
+  Properly manage focus behavior, especially for custom views, dialogs, and forms. Use `android:nextFocusDown`, `android:nextFocusUp`, and related attributes to define logical navigation paths for keyboard and D-pad users. Additionally, test your app with a screen reader to ensure that focus moves naturally between elements.
+  
+  ## Color Contrast and Visual Accessibility
+  
+  Provide sufficient contrast between text and background colors to improve readability for users with low vision or color blindness. Tools like Android Studio's Accessibility Scanner can help evaluate and optimize color contrast in your app.
+  
+  ## Custom Views and Accessibility
+  
+  When creating custom views, implement the `AccessibilityDelegate` to define how screen readers interact with your custom UI components. Override the `onInitializeAccessibilityNodeInfo()` method to provide meaningful descriptions and states for your custom elements.
+  
+  ```kotlin
+  class CustomView(context: Context) : View(context) {
+      init {
+          importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+          setAccessibilityDelegate(object : AccessibilityDelegate() {
+              override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
+                  super.onInitializeAccessibilityNodeInfo(host, info)
+                  info.text = "Custom component description"
+              }
+          })
+      }
+  }
+  ```
+  
+  ## Testing for Accessibility
+  
+  Use tools such as **Accessibility Scanner** and the **Layout Inspector** in Android Studio to identify and fix accessibility issues. These tools help ensure that your app is accessible to users relying on assistive technologies.
+  
+  ## Summary
+  
+  Ensuring accessibility in Android applications involves:
+  
+  - Providing content descriptions
+  - Supporting dynamic font sizes with `sp` units
+  - Managing focus for navigation
+  - Ensuring adequate color contrast
+  - Adding accessibility support for custom views
+  
+  By leveraging Android tools and testing thoroughly, you can build applications that are inclusive and accessible to all users. For more information about accessibility, check out the official documentation.
