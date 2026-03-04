@@ -416,7 +416,8 @@
   ## ViewModel Lifetime
   
   The illustration below outlines the lifetime of a ViewModel in relation to an Activity's lifecycle. The diagram highlights how a ViewModel instance is created and retained through Activity lifecycle events, surviving even when the Activity is temporarily destroyed and recreated. While this example uses an Activity, the same principles apply to Fragments and other lifecycle-aware components that act as `ViewModelStoreOwner`.
-  
+  <img width="295" height="413" alt="Screenshot 2026-03-04 at 5 36 33 PM" src="https://github.com/user-attachments/assets/130a3f49-04f9-455f-b83c-bec6709ae201" />
+
   ## Surviving Configuration Changes
   
   In Android, the Jetpack ViewModel is designed to survive configuration changes such as screen rotations or device language updates. When a ViewModel is created for a UI component (like an Activity or Fragment), it is tied to the component's lifecycle owner. For activities, this lifecycle is usually the `ComponentActivity`, while for fragments, it is the `Fragment` itself. The key factory is `ViewModelStore`, which is retained across configuration changes, enabling the ViewModel to persist its data without being re-created.
