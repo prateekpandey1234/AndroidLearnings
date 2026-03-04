@@ -191,7 +191,27 @@
 
 
 
+# Android Comipling Process 
 
+1. ART compiles applications using Ahead-of-Time (AOT)8 compilation, converting bytecode into machine code during app installation. This eliminates the need for Just-in-Time (JIT)9 compilation at runtime, leading to faster app startup times and reduced CPU usage during execution.
+
+      2. Key features of ART include:
+      Improved performance: AOT compilation results in optimized machine code, reducing runtime overhead.
+      Garbage collection: ART introduces improved garbage collection techniques for better memory
+      management.
+      Debugging and profiling support: ART provides enhanced tools for developers, such as detailed stack
+      traces and memory usage analysis.
+3. Dalvik : Dalvik was the original runtime used in Android before ART. It was designed to execute applications in a virtual machine environment, optimizing for limited memory and processing power. Dalvik employs Just-in-Time (JIT)10 compilation, converting bytecode into machine code at runtime. While this approach reduces the time required for app installation, it increases runtime overhead due to on-the-fly compilation.
+
+      4. Key characteristics of Dalvik include:
+      Compact bytecode: Dalvik uses .dex (Dalvik Executable) files, which are optimized for low memory usage
+      and quick execution.
+      Register-based VM: Dalvik is register-based rather than stack-based (like Java Virtual Machine), which
+      improves instruction efficiency.
+      Dalvik’s limitations, including slower app startup times and higher CPU usage, led to its replacement by ART in
+      newer Android versions.
+
+      
 
 # Android interview Experience
 1.https://medium.com/@himv1998 
