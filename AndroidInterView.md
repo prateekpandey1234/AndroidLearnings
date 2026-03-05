@@ -435,3 +435,13 @@
   - **ViewModelStore**: Acts as the container that persists across configuration changes
   - **ViewModelStoreOwner**: Interface implemented by `ComponentActivity` and `Fragment`
   - **Storage Mechanism**: ViewModels are stored in a `Map` with unique `String` keys  
+
+
+
+# Test Driven Development 
+
+1. TDD comprises of 3 stages : Red -> Green -> Blue 
+2. Red -> write a piece of code very basic so that it fails the test , not getting the desired output .
+3. Green -> complete the code which passes the test and works .
+4. Blue (Refractor) -> refactor and optimize the code further while it passes tests without changing the test themselves 
+5. main concern is that we want to drive our code from the tests written . 
