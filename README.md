@@ -1036,6 +1036,27 @@ remember to make a interface repo which is then used by 2 different repositories
 
 
 
+5. Notification Testing (https://proandroiddev.com/creating-reliable-tests-for-android-notifications-4b3aa7aa147a)
+   a. to test those notifications , we can basically run assertion by generating the notification into notificationManager 
+      @Test
+      fun test_myNotification() {
+          // Send the notification
+          val id = 13
+          val name = "Testing my notification"
+          myNotification.send(id = id, name = name)
+      
+   // Validate the notification info
+          val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+          with(manager.activeNotifications.first()) {
+              assertEquals(id, this.id)
+              assertEquals(name, this.notification.extras[Notification.EXTRA_TEXT])
+          }
+      }
+       
+   
+
+
+
    
 
     
