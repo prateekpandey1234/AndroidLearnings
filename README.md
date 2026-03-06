@@ -1055,7 +1055,1028 @@ remember to make a interface repo which is then used by 2 different repositories
             }
        
    
+# Jetpack Compose Testing - Complete Guide
 
+## Setup Dependencies
+
+### In `app/build.gradle.kts`:
+
+```kotlin
+dependencies {
+    // Compose BOM (Bill of Materials)
+    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    
+    // Compose UI
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    
+    // Compose Testing
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    
+    // Additional testing
+    androidTestImplementation("androidx.navigation:navigation-testing:2.7.7")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+}
+```
+
+---
+
+## 1. Testing FAB (Floating Action Button)
+
+### Production Code: `FabScreen.kt`
+
+```kotlin
+@Composable
+fun FabScreen() {
+    var count by remember { mutableStateOf(0) }
+    
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { count++ },
+                modifier = Modifier.testTag("fab")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add item"
+                )
+            }
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Items: $count",
+                modifier = Modifier.testTag("counter_text")
+            )
+        }
+    }
+}
+```
+
+### Test: `FabScreenTest.kt`
+
+```kotlin
+package com.example.app
+
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class FabScreenTest {
+    
+    @get:Rule
+    val composeTestRule = createComposeRule()
+    
+    @Test
+    fun fab_isDisplayed() {
+        composeTestRule.setContent {
+            FabScreen()
+        }
+        
+        composeTestRule
+            .onNodeWithTag("fab")
+            .assertIsDisplayed()
+    }
+    
+    @Test
+    fun fab_whenClicked_incrementsCounter() {
+        composeTestRule.setContent {
+            FabScreen()
+        }
+        
+        // Initial state
+        composeTestRule
+            .onNodeWithTag("counter_text")
+            .assertTextEquals("Items: 0")
+        
+        // Click FAB
+        composeTestRule
+            .onNodeWithTag("fab")
+            .performClick()
+        
+        // Verify count increased
+        composeTestRule
+            .onNodeWithTag("counter_text")
+            .assertTextEquals("Items: 1")
+    }
+    
+    @Test
+    fun fab_multipleClicks_incrementsCounterMultipleTimes() {
+        composeTestRule.setContent {
+            FabScreen()
+        }
+        
+        // Click 3 times
+        repeat(3) {
+            composeTestRule
+                .onNodeWithTag("fab")
+                .performClick()
+        }
+        
+        composeTestRule
+            .onNodeWithTag("counter_text")
+            .assertTextEquals("Items: 3")
+    }
+    
+    @Test
+    fun fab_hasCorrectContentDescription() {
+        composeTestRule.setContent {
+            FabScreen()
+        }
+        
+        composeTestRule
+            .onNodeWithContentDescription("Add item")
+            .assertExists()
+    }
+}
+```
+
+---
+
+## 2. Testing Search Box / Text Input
+
+### Production Code: `SearchScreen.kt`
+
+```kotlin
+@Composable
+fun SearchScreen() {
+    var searchQuery by remember { mutableStateOf("") }
+    var searchResults by remember { mutableStateOf<List<String>>(emptyList()) }
+    
+    val allItems = listOf(
+        "Apple", "Banana", "Cherry", "Date", "Elderberry",
+        "Fig", "Grape", "Honeydew", "Kiwi", "Lemon"
+    )
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Search Box
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { query ->
+                searchQuery = query
+                searchResults = if (query.isEmpty()) {
+                    emptyList()
+                } else {
+                    allItems.filter { 
+                        it.contains(query, ignoreCase = true) 
+                    }
+                }
+            },
+            label = { Text("Search") },
+            placeholder = { Text("Type to search...") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search icon"
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            searchQuery = ""
+                            searchResults = emptyList()
+                        },
+                        modifier = Modifier.testTag("clear_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear search"
+                        )
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("search_field")
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Results
+        if (searchResults.isEmpty() && searchQuery.isNotEmpty()) {
+            Text(
+                text = "No results found",
+                modifier = Modifier.testTag("no_results")
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.testTag("search_results")
+            ) {
+                items(searchResults) { item ->
+                    Text(
+                        text = item,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .testTag("result_$item")
+                    )
+                }
+            }
+        }
+    }
+}
+```
+
+### Test: `SearchScreenTest.kt`
+
+```kotlin
+@RunWith(AndroidJUnit4::class)
+class SearchScreenTest {
+    
+    @get:Rule
+    val composeTestRule = createComposeRule()
+    
+    @Test
+    fun searchField_isDisplayed() {
+        composeTestRule.setContent {
+            SearchScreen()
+        }
+        
+        composeTestRule
+            .onNodeWithTag("search_field")
+            .assertIsDisplayed()
+    }
+    
+    @Test
+    fun searchField_whenTyping_displaysText() {
+        composeTestRule.setContent {
+            SearchScreen()
+        }
+        
+        composeTestRule
+            .onNodeWithTag("search_field")
+            .performTextInput("Apple")
+        
+        composeTestRule
+            .onNodeWithTag("search_field")
+            .assertTextContains("Apple")
+    }
+    
+    @Test
+    fun searchField_whenTyping_filtersResults() {
+        composeTestRule.setContent {
+            SearchScreen()
+        }
+        
+        // Type search query
+        composeTestRule
+            .onNodeWithTag("search_field")
+            .performTextInput("berry")
+        
+        // Verify results
+        composeTestRule
+            .onNodeWithTag("result_Elderberry")
+            .assertExists()
+        
+        // Verify non-matching items don't exist
+        composeTestRule
+            .onNodeWithTag("result_Apple")
+            .assertDoesNotExist()
+    }
+    
+    @Test
+    fun clearButton_whenClicked_clearsSearchAndResults() {
+        composeTestRule.setContent {
+            SearchScreen()
+        }
+        
+        // Type and verify results exist
+        composeTestRule
+            .onNodeWithTag("search_field")
+            .performTextInput("Grape")
+        
+        composeTestRule
+            .onNodeWithTag("result_Grape")
+            .assertExists()
+        
+        // Click clear button
+        composeTestRule
+            .onNodeWithTag("clear_button")
+            .performClick()
+        
+        // Verify search is cleared
+        composeTestRule
+            .onNodeWithTag("search_field")
+            .assertTextEquals("Search", "")  // Label and empty text
+        
+        // Verify results are cleared
+        composeTestRule
+            .onNodeWithTag("result_Grape")
+            .assertDoesNotExist()
+    }
+    
+    @Test
+    fun searchField_withNoResults_showsNoResultsMessage() {
+        composeTestRule.setContent {
+            SearchScreen()
+        }
+        
+        composeTestRule
+            .onNodeWithTag("search_field")
+            .performTextInput("xyz123")
+        
+        composeTestRule
+            .onNodeWithTag("no_results")
+            .assertIsDisplayed()
+            .assertTextEquals("No results found")
+    }
+}
+```
+
+---
+
+## 3. Testing Lazy Lists (LazyColumn/LazyRow)
+
+### Production Code: `TaskListScreen.kt`
+
+```kotlin
+data class Task(
+    val id: Int,
+    val title: String,
+    val isCompleted: Boolean = false
+)
+
+@Composable
+fun TaskListScreen(
+    tasks: List<Task> = emptyList(),
+    onTaskClick: (Task) -> Unit = {},
+    onDeleteTask: (Task) -> Unit = {}
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("task_list"),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            items = tasks,
+            key = { task -> task.id }
+        ) { task ->
+            TaskItem(
+                task = task,
+                onClick = { onTaskClick(task) },
+                onDelete = { onDeleteTask(task) }
+            )
+        }
+    }
+}
+
+@Composable
+fun TaskItem(
+    task: Task,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("task_item_${task.id}")
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textDecoration = if (task.isCompleted) {
+                        TextDecoration.LineThrough
+                    } else {
+                        TextDecoration.None
+                    },
+                    modifier = Modifier.testTag("task_title_${task.id}")
+                )
+                if (task.isCompleted) {
+                    Text(
+                        text = "Completed",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Green,
+                        modifier = Modifier.testTag("task_status_${task.id}")
+                    )
+                }
+            }
+            
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.testTag("delete_button_${task.id}")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete task ${task.title}"
+                )
+            }
+        }
+    }
+}
+```
+
+### Test: `TaskListScreenTest.kt`
+
+```kotlin
+@RunWith(AndroidJUnit4::class)
+class TaskListScreenTest {
+    
+    @get:Rule
+    val composeTestRule = createComposeRule()
+    
+    private val sampleTasks = listOf(
+        Task(1, "Buy groceries", false),
+        Task(2, "Clean house", true),
+        Task(3, "Write code", false),
+        Task(4, "Exercise", false),
+        Task(5, "Read book", true)
+    )
+    
+    @Test
+    fun taskList_displaysAllItems() {
+        composeTestRule.setContent {
+            TaskListScreen(tasks = sampleTasks)
+        }
+        
+        // Verify all tasks are displayed
+        sampleTasks.forEach { task ->
+            composeTestRule
+                .onNodeWithTag("task_item_${task.id}")
+                .assertExists()
+                .assertIsDisplayed()
+        }
+    }
+    
+    @Test
+    fun taskList_displaysCorrectTitles() {
+        composeTestRule.setContent {
+            TaskListScreen(tasks = sampleTasks)
+        }
+        
+        composeTestRule
+            .onNodeWithTag("task_title_1")
+            .assertTextEquals("Buy groceries")
+        
+        composeTestRule
+            .onNodeWithTag("task_title_2")
+            .assertTextEquals("Clean house")
+    }
+    
+    @Test
+    fun taskList_completedTask_showsCompletedStatus() {
+        composeTestRule.setContent {
+            TaskListScreen(tasks = sampleTasks)
+        }
+        
+        // Task 2 is completed
+        composeTestRule
+            .onNodeWithTag("task_status_2")
+            .assertExists()
+            .assertTextEquals("Completed")
+        
+        // Task 1 is not completed
+        composeTestRule
+            .onNodeWithTag("task_status_1")
+            .assertDoesNotExist()
+    }
+    
+    @Test
+    fun taskList_whenItemClicked_triggersCallback() {
+        var clickedTask: Task? = null
+        
+        composeTestRule.setContent {
+            TaskListScreen(
+                tasks = sampleTasks,
+                onTaskClick = { task -> clickedTask = task }
+            )
+        }
+        
+        composeTestRule
+            .onNodeWithTag("task_item_1")
+            .performClick()
+        
+        assert(clickedTask?.id == 1)
+        assert(clickedTask?.title == "Buy groceries")
+    }
+    
+    @Test
+    fun taskList_deleteButton_triggersCallback() {
+        var deletedTask: Task? = null
+        
+        composeTestRule.setContent {
+            TaskListScreen(
+                tasks = sampleTasks,
+                onDeleteTask = { task -> deletedTask = task }
+            )
+        }
+        
+        composeTestRule
+            .onNodeWithTag("delete_button_3")
+            .performClick()
+        
+        assert(deletedTask?.id == 3)
+        assert(deletedTask?.title == "Write code")
+    }
+    
+    @Test
+    fun taskList_scrolling_worksCorrectly() {
+        // Create many tasks to enable scrolling
+        val manyTasks = List(50) { index ->
+            Task(index, "Task $index", index % 3 == 0)
+        }
+        
+        composeTestRule.setContent {
+            TaskListScreen(tasks = manyTasks)
+        }
+        
+        // First item should be visible
+        composeTestRule
+            .onNodeWithTag("task_item_0")
+            .assertIsDisplayed()
+        
+        // Last item should not be visible initially
+        composeTestRule
+            .onNodeWithTag("task_item_49")
+            .assertIsNotDisplayed()
+        
+        // Scroll to bottom
+        composeTestRule
+            .onNodeWithTag("task_list")
+            .performScrollToIndex(49)
+        
+        // Now last item should be visible
+        composeTestRule
+            .onNodeWithTag("task_item_49")
+            .assertIsDisplayed()
+    }
+    
+    @Test
+    fun taskList_emptyList_doesNotShowItems() {
+        composeTestRule.setContent {
+            TaskListScreen(tasks = emptyList())
+        }
+        
+        composeTestRule
+            .onNodeWithTag("task_list")
+            .assertExists()
+        
+        // No items should exist
+        composeTestRule
+            .onNodeWithTag("task_item_1")
+            .assertDoesNotExist()
+    }
+    
+    @Test
+    fun taskList_findByText_worksCorrectly() {
+        composeTestRule.setContent {
+            TaskListScreen(tasks = sampleTasks)
+        }
+        
+        // Find task by text content
+        composeTestRule
+            .onNodeWithText("Buy groceries")
+            .assertExists()
+        
+        composeTestRule
+            .onNodeWithText("Exercise")
+            .assertExists()
+    }
+}
+```
+
+---
+
+## 4. Testing Compose Navigation
+
+### Production Code: Navigation Setup
+
+```kotlin
+// Screens
+@Composable
+fun HomeScreen(
+    onNavigateToDetails: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .testTag("home_screen"),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Home Screen",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Button(
+            onClick = { onNavigateToDetails("user123") },
+            modifier = Modifier.testTag("navigate_button")
+        ) {
+            Text("Go to Details")
+        }
+    }
+}
+
+@Composable
+fun DetailsScreen(
+    userId: String,
+    onNavigateBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .testTag("details_screen"),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Details Screen",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = "User ID: $userId",
+            modifier = Modifier.testTag("user_id_text")
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Button(
+            onClick = onNavigateBack,
+            modifier = Modifier.testTag("back_button")
+        ) {
+            Text("Go Back")
+        }
+    }
+}
+
+// Navigation Graph
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+    
+    NavHost(
+        navController = navController,
+        startDestination = "home"
+    ) {
+        composable("home") {
+            HomeScreen(
+                onNavigateToDetails = { userId ->
+                    navController.navigate("details/$userId")
+                }
+            )
+        }
+        
+        composable(
+            route = "details/{userId}",
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            DetailsScreen(
+                userId = userId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+    }
+}
+```
+
+### Test: `NavigationTest.kt`
+
+```kotlin
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.compose.ComposeNavigator
+import androidx.navigation.testing.TestNavHostController
+
+@RunWith(AndroidJUnit4::class)
+class NavigationTest {
+    
+    @get:Rule
+    val composeTestRule = createComposeRule()
+    
+    private lateinit var navController: TestNavHostController
+    
+    @Test
+    fun navHost_verifyStartDestination() {
+        composeTestRule.setContent {
+            navController = TestNavHostController(LocalContext.current)
+            navController.navigatorProvider.addNavigator(ComposeNavigator())
+            AppNavigation()
+        }
+        
+        // Verify home screen is displayed
+        composeTestRule
+            .onNodeWithTag("home_screen")
+            .assertIsDisplayed()
+    }
+    
+    @Test
+    fun homeScreen_clickButton_navigatesToDetails() {
+        composeTestRule.setContent {
+            AppNavigation()
+        }
+        
+        // Verify we're on home screen
+        composeTestRule
+            .onNodeWithTag("home_screen")
+            .assertIsDisplayed()
+        
+        // Click navigate button
+        composeTestRule
+            .onNodeWithTag("navigate_button")
+            .performClick()
+        
+        // Verify we're on details screen
+        composeTestRule
+            .onNodeWithTag("details_screen")
+            .assertIsDisplayed()
+        
+        // Verify user ID is passed correctly
+        composeTestRule
+            .onNodeWithTag("user_id_text")
+            .assertTextEquals("User ID: user123")
+    }
+    
+    @Test
+    fun detailsScreen_clickBack_navigatesToHome() {
+        composeTestRule.setContent {
+            AppNavigation()
+        }
+        
+        // Navigate to details
+        composeTestRule
+            .onNodeWithTag("navigate_button")
+            .performClick()
+        
+        // Click back button
+        composeTestRule
+            .onNodeWithTag("back_button")
+            .performClick()
+        
+        // Verify we're back on home screen
+        composeTestRule
+            .onNodeWithTag("home_screen")
+            .assertIsDisplayed()
+        
+        // Details screen should not exist
+        composeTestRule
+            .onNodeWithTag("details_screen")
+            .assertDoesNotExist()
+    }
+    
+    @Test
+    fun navigation_verifyRoutes() {
+        composeTestRule.setContent {
+            navController = TestNavHostController(LocalContext.current).apply {
+                navigatorProvider.addNavigator(ComposeNavigator())
+            }
+            
+            NavHost(
+                navController = navController,
+                startDestination = "home"
+            ) {
+                composable("home") {
+                    HomeScreen(
+                        onNavigateToDetails = { userId ->
+                            navController.navigate("details/$userId")
+                        }
+                    )
+                }
+                
+                composable("details/{userId}") { backStackEntry ->
+                    val userId = backStackEntry.arguments?.getString("userId") ?: ""
+                    DetailsScreen(
+                        userId = userId,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
+        }
+        
+        // Verify initial route
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        assert(currentRoute == "home")
+        
+        // Navigate to details
+        composeTestRule
+            .onNodeWithTag("navigate_button")
+            .performClick()
+        
+        // Wait for navigation
+        composeTestRule.waitForIdle()
+        
+        // Verify new route
+        val newRoute = navController.currentBackStackEntry?.destination?.route
+        assert(newRoute == "details/{userId}")
+    }
+}
+```
+
+---
+
+## Key Compose Testing Concepts
+
+### 1. Test Tags
+Always use `testTag()` for reliable testing:
+```kotlin
+Modifier.testTag("my_button")
+```
+
+### 2. Finding Nodes
+```kotlin
+// By tag
+onNodeWithTag("search_field")
+
+// By text
+onNodeWithText("Submit")
+
+// By content description
+onNodeWithContentDescription("Search icon")
+
+// Multiple nodes
+onAllNodesWithTag("list_item")
+```
+
+### 3. Actions
+```kotlin
+performClick()              // Click
+performTextInput("text")    // Type text
+performTextReplacement("new") // Replace text
+performScrollToIndex(5)     // Scroll to position
+performScrollToNode(...)    // Scroll to specific node
+performTouchInput { ... }   // Custom gestures
+```
+
+### 4. Assertions
+```kotlin
+assertExists()
+assertDoesNotExist()
+assertIsDisplayed()
+assertIsNotDisplayed()
+assertIsEnabled()
+assertIsNotEnabled()
+assertTextEquals("Expected")
+assertTextContains("partial")
+assertHasClickAction()
+```
+
+### 5. Waiting
+```kotlin
+// Wait for idle state
+composeTestRule.waitForIdle()
+
+// Wait until condition
+composeTestRule.waitUntil(timeoutMillis = 5000) {
+    // condition
+}
+
+// Wait for node
+composeTestRule.waitUntilExists(
+    matcher = hasTestTag("loading"),
+    timeoutMillis = 3000
+)
+```
+
+---
+
+## Running Compose Tests
+
+### Android Studio:
+1. Right-click on test file → Run
+2. Must have emulator/device running
+
+### Command Line:
+```bash
+# Run all Compose tests
+./gradlew connectedAndroidTest
+
+# Run specific test
+./gradlew connectedAndroidTest --tests "com.example.app.SearchScreenTest"
+
+# With debugging
+./gradlew connectedAndroidTest --info
+```
+
+---
+
+## Common Patterns
+
+### Testing ViewModel Integration
+```kotlin
+@Test
+fun screen_withViewModel_displaysData() {
+    val viewModel = MyViewModel()
+    
+    composeTestRule.setContent {
+        MyScreen(viewModel = viewModel)
+    }
+    
+    // Trigger action
+    composeTestRule
+        .onNodeWithTag("load_button")
+        .performClick()
+    
+    // Wait and verify
+    composeTestRule.waitForIdle()
+    composeTestRule
+        .onNodeWithTag("data_text")
+        .assertIsDisplayed()
+}
+```
+
+### Testing State Changes
+```kotlin
+@Test
+fun button_togglesState() {
+    composeTestRule.setContent {
+        var isEnabled by remember { mutableStateOf(false) }
+        
+        Button(
+            onClick = { isEnabled = !isEnabled },
+            modifier = Modifier.testTag("toggle_button")
+        ) {
+            Text(if (isEnabled) "Enabled" else "Disabled")
+        }
+    }
+    
+    // Initial state
+    composeTestRule
+        .onNodeWithText("Disabled")
+        .assertExists()
+    
+    // Toggle
+    composeTestRule
+        .onNodeWithTag("toggle_button")
+        .performClick()
+    
+    // New state
+    composeTestRule
+        .onNodeWithText("Enabled")
+        .assertExists()
+}
+```
+
+---
+
+
+
+---
+
+## Quick Reference
+
+```kotlin
+// Setup
+val composeTestRule = createComposeRule()
+
+// Set content
+composeTestRule.setContent { MyComposable() }
+
+// Find & Act
+composeTestRule
+    .onNodeWithTag("button")
+    .performClick()
+
+// Assert
+composeTestRule
+    .onNodeWithText("Result")
+    .assertIsDisplayed()
+
+// Wait
+composeTestRule.waitForIdle()
+```
+
+This covers the complete testing workflow for modern Compose UIs!
+   
 
 
    
