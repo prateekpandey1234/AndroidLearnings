@@ -445,3 +445,99 @@
 3. Green -> complete the code which passes the test and works .
 4. Blue (Refractor) -> refactor and optimize the code further while it passes tests without changing the test themselves 
 5. main concern is that we want to drive our code from the tests written . 
+
+
+# SOLID Principles
+1. Single Responsibility Principle (SRP) : A class should have only one reason to change, meaning it should only have one job or responsibility.In Android, it’s common to see large     classes that handle UI, data processing, and more. SRP encourages breaking these tasks into smaller, focused classes. Example: Imagine we have an activity that both loads data from a server and displays it on the UI.Instead of doing everything in one activity, we can separate concerns:
+    
+    A DataRepository class handles data fetching.
+    The MainActivity class focuses on displaying data.
+
+2. Open/Closed Principle (OCP) : Software entities should be open for extension but closed for modification. This means we should be able to add new functionality without changing      existing code. This is particularly useful for Android projects that grow over time and require new features. this means you should be able to add new features or behaviors to your app without touching existing, already-tested code. You do this by using interfaces, abstract classes, and polymorphism.   
+
+    ```kotlin
+    // GOOD: Adheres to OCP
+
+    // 1. Define the abstraction (Closed for modification)
+    interface EventTracker {
+        fun track(eventName: String)
+    }
+    
+    // 2. Implement specific behaviors (Open for extension)
+    class FirebaseTracker : EventTracker {
+        override fun track(eventName: String) { /* Send to Firebase */ }
+    }
+    
+    class MixpanelTracker : EventTracker {
+        override fun track(eventName: String) { /* Send to Mixpanel */ }
+    }
+    
+    // 3. Add a new tracker without touching the existing code!
+    class AmplitudeTracker : EventTracker {
+        override fun track(eventName: String) { /* Send to Amplitude */ }
+    }
+    
+    // 4. The Usage
+    class AnalyticsManager(private val trackers: List<EventTracker>) {
+        fun trackAll(eventName: String) {
+            // This class never needs to change, even if you add 100 new trackers.
+            trackers.forEach { it.track(eventName) } 
+        }
+    }```
+
+3. Liskov Subsitution principle : objects of a superclass should be replaceable with objects of its subclasses without breaking the application. , In simpler terms: A child class must fully honor the contract established by its parent class. If you pass a subclass into a function that expects the parent class, the program should not crash, throw unexpected exceptions, or behave bizarrely.     
+
+  ```kotlin
+  class ProfileFragment : Fragment() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        // If you delete this next line, the app crashes.
+        super.onCreate(savedInstanceState) 
+        
+        // Your custom logic...
+    }
+}   
+```
+4. Interface Segregation Principle (ISP) : Clients should not be forced to implement interfaces they don’t use. Instead of one large interface, create smaller, more specific ones.
+In Android, you often work with interfaces in callback patterns and listeners. Following ISP keeps the interfaces focused and manageable.Example: Imagine a single interface for user interactions on a music player that includes methods for play, pause, stop, and record. Instead of forcing classes to implement all these methods, split the interfaces.
+
+```kotlin
+  interface Playable {
+    fun play()
+    fun pause()
+}
+interface Recordable {
+    fun record()
+    fun stop()
+}
+```
+5. Dependency Inversion Principle (DIP)
+High-level modules should not depend on low-level modules; both should depend on abstractions. This principle encourages dependency injection, improving modularity and testing.
+In Android, dependency inversion is commonly achieved through dependency injection frameworks like Hilt or Dagger.
+Example: Suppose an activity directly depends on DataRepository, creating a tight coupling. To follow DIP, we define an interface, and the activity depends on this interface instead.
+```kotlin
+interface Repository {
+    fun fetchData(): List<String>
+}
+class DataRepository : Repository {
+    override fun fetchData(): List<String> {
+        // Fetch data from the server or database
+        return listOf("Data from Repository")
+    }
+}
+class MainActivity : AppCompatActivity() {
+    private lateinit var repository: Repository
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        repository = DataRepository() // Or injected by DI framework like Hilt
+        val data = repository.fetchData()
+        displayData(data)
+    }
+    private fun displayData(data: List<String>) {
+        // Code to update UI
+    }
+}
+```
+6. benefits of SOLID principles:- testability , maintainence , readable and scalable .
+
+
