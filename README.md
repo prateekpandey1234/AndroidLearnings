@@ -214,7 +214,140 @@
       
 
 # Android interview Experience
-1.https://medium.com/@himv1998 
+1.https://medium.com/@himv1998
+
+
+# Custom Live Data (https://medium.com/@rajabhandari100/livedata-from-scratch-building-your-own-lifecycle-aware-observable-019f8e40e3a7)
+
+0. Refer to concept of wrapping in other .md file .
+1. For our live data we must have our observers be wrapped with the lifeCycle of our screen/activity to allow better lifecycle awareness for the Live data .
+```kotlin
+// Remember that observer are those are waiting and observing the value in our live data
+// typealias here just changes the name of '<T?>->unit' to MyObserver<T>
+typealias MyObserver<T> = (T?) -> Unit // here the lambda function takes T nullable type arguement and returns nothing
+
+open class MyLiveData<T> {
+
+    private var dataHolder: T? = null
+    private val observers = HashMap<MyObserverWrapper, LifeCycleObserverWrapper>() // Our Hashmap will hol the key-value pair for obersever with LifeCycle observer
+    private val mainHandler = Handler(Looper.getMainLooper())// here we can to our main Thread by queueing up the tasks using handler
+
+    //Synchronous setValue
+    protected open fun setValue(value: T) { // called must on main thread 
+        // update every observer with the new value
+        dataHolder = value // store and update the dataHolder 
+        notifyObservers()
+    }
+
+    //Asynchronous postValue
+    //1. postValue() called from Background Thread
+    //   ↓
+    //2. mainHandler.post { ... }
+    //   - Sends a task to Main Thread's queue
+    //   ↓
+    //3. Main Thread eventually picks up the task
+    //   ↓
+    //4. setValue(value) executes on Main Thread
+    //   ↓
+    //5. Observers notified safely on Main Thread
+    //   ↓
+    //6. UI updates safely! ✅
+    protected open fun postValue(value: T) {// called on background thread
+        mainHandler.post { setValue(value) }
+    }
+
+    fun getValue(): T? = dataHolder
+
+    fun addObserver(lifecycleOwner: LifecycleOwner, observer: MyObserver<T>) {
+        // the lifeCycleOwner here is lifeCycle of we passed through when adding the observer in android
+        // ex: viewModel.liveData.addObserver(this ){user ->
+        //    textView.text = user.name}
+
+        // the textView.text = user.name is Lambda function  here
+        //// 2. The lambda { user -> textView.text = user.name } exists as a function
+        //
+        //// 3. FIRST WRAPPING: Put function in MyObserverWrapper
+        //val observer = { user -> textView.text = user.name }  // Your function
+        //val wrapper1 = MyObserverWrapper(observer)  // Wrapped!
+        //
+        //// Now wrapper1 contains:
+        //// - The observer function
+        //// - A notify() method to call it cleanly
+        //
+        //// 4. SECOND WRAPPING: Put wrapper1 in LifeCycleObserverWrapper
+        //val wrapper2 = LifeCycleObserverWrapper(
+        //    lifecycleOwner = this,      // Your Activity
+        //    observerWrapper = wrapper1  // The first wrapper
+        //)
+        //
+        //// Now wrapper2 contains:
+        //// - wrapper1 (which contains your function)
+        //// - The Activity lifecycle
+        //// - Auto-behavior for onStart() and onDestroy()
+        //
+        //// 5. Store in HashMap
+        //observers[wrapper1] = wrapper2
+        val wrapperAroundObserver = MyObserverWrapper(observer)// this observer is the lambda function = <T?> -> Unit
+        val lifecycleObserverWrapper = LifeCycleObserverWrapper(lifecycleOwner, wrapperAroundObserver)// wrapping LifeCycle with the observer
+
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserverWrapper)
+        observers[wrapperAroundObserver] = lifecycleObserverWrapper
+
+        // Notify immediately if lifecycle is at least started
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            wrapperAroundObserver.notify(dataHolder)// only notify to the observer when life cycle has started atLeast
+        }
+    }
+
+    fun removeObserver(observer: MyObserver<T>) {
+        val wrapperAssociatedWithTheGivenObserver = observers.keys.find { it.observer === observer }//look up the observer in the map
+        wrapperAssociatedWithTheGivenObserver?.let {
+
+            observers[it]?.let { lifeCycleObserver ->
+                lifeCycleObserver.lifecycleOwner.lifecycle.removeObserver(lifeCycleObserver)// remove the lifeCycleObserver from the lIFEcYCLEwRAPPER
+                // WHERE we wrapped both lifecyle and observer together
+            }
+
+            observers.remove(it) //removing from the global map we have in this class
+        }
+    }
+
+    private fun notifyObservers() {
+        observers.keys.forEach { wrapper ->
+            // notify the observers when all lifeCycle are started
+            val lifecycle = observers[wrapper]?.lifecycleOwner?.lifecycle
+            if (lifecycle != null && lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                wrapper.notify(dataHolder)
+            }
+        }
+    }
+
+    //Wrapper around MyObserver, helps keep things clean and focused
+    // inner class are those class whose instances are tied to the outer class instance and can access the outer class variables
+    private inner class MyObserverWrapper(val observer: MyObserver<T>) {
+        fun notify(value: T?) {
+            observer(value)
+        }
+    }
+
+    private inner class LifeCycleObserverWrapper(
+        val lifecycleOwner: LifecycleOwner,
+        private val observerWrapper: MyObserverWrapper
+    ) : DefaultLifecycleObserver {
+
+        override fun onStart(owner: LifecycleOwner) {
+            // when the Lifecycle ownere starts then notify the lamba to observe
+            observerWrapper.notify(dataHolder)
+        }
+
+        override fun onDestroy(owner: LifecycleOwner) {
+            removeObserver(observerWrapper.observer)
+            // remove the observer
+        }
+    }
+}
+```
+
 
 
 
