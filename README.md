@@ -697,6 +697,9 @@ Flows
    6.  always remember to add flow as an lifecycleaware component
    8.  flow is a one timer thing doesn't hold the state or any data , if reset it will go to orginal data before changing
    9.  you can also make the app as single source of truth , like only place can handle data :-
+
+
+```kotlin
    //making flow as single source of truth 
     suspend fun getChannelMessage(context: Context,channelId:Long) : Flow<NoticeBoardResource<List<ChannelMessage>>> = flow {
 
@@ -736,8 +739,10 @@ Flows
                 }
             }
         }
-      } 
-   11. produceState -> a extension fucntion used to generate state of non state aware components , mostly it's used to convert flow as state flow . https://medium.com/@ramadan123sayed/understanding-producestate-in-jetpack-compose-principles-and-best-practices-for-2025-df8b43d02e98
+      }
+
+```
+   10. produceState -> a extension fucntion used to generate state of non state aware components , mostly it's used to convert flow as state flow . https://medium.com/@ramadan123sayed/understanding-producestate-in-jetpack-compose-principles-and-best-practices-for-2025-df8b43d02e98
 
 
 Coroutines
