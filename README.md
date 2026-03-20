@@ -748,6 +748,85 @@ Flows
 Coroutines
    1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
 
+   ## The Critical Distinction: Coroutine vs Thread
+ 
+### What You're Asking:
+ 
+> "Using suspend keyword suspends the thread, so the suspend code still uses the main thread pool?"
+ 
+### The Truth:
+ 
+**The `suspend` keyword suspends the COROUTINE, not the thread!**
+ 
+This is the most important concept to understand.
+ 
+---
+ 
+## Coroutines vs Threads: The Mental Model
+ 
+```
+Thread = Worker
+Coroutine = Task
+ 
+One worker can handle multiple tasks by switching between them.
+```
+ 
+### Visual Representation:
+ 
+```
+Traditional Blocking:
+Thread 1: [────Task A (blocked)────] [Task B]
+Thread 2: [────Task C (blocked)────] [Task D]
+Thread 3: [────Task E (blocked)────] [Task F]
+ 
+↑ Each thread stuck waiting, can't do other work
+ 
+ 
+Coroutines with Suspension:
+Thread 1: [Task A][Task C][Task A][Task B][Task E]
+Thread 2: [Task C][Task D][Task E][Task F][Task A]
+Thread 3: [Task B][Task E][Task C][Task D][Task F]
+ 
+↑ Threads can switch between tasks when they suspend
+
+/ ❌ BAD: This WILL block the main thread!
+lifecycleScope.launch {  // Runs on Main thread
+    val data = database.query()  // BLOCKING operation
+    // Main thread BLOCKED until query completes
+    // UI FREEZES ❌
+}
+```
+ 
+**Why?** Because `database.query()` is a BLOCKING function, not a suspending function!
+ 
+### Two Types of Operations:
+ 
+#### Type 1: Suspending Functions (Non-blocking)
+ 
+```kotlin
+suspend fun delay(timeMillis: Long)  // Suspends coroutine, releases thread
+suspend fun await()                  // Suspends coroutine, releases thread
+```
+ 
+**These are safe on Main thread** because they don't block.
+ 
+#### Type 2: Blocking Functions (Thread-blocking)
+ 
+```kotlin
+Thread.sleep(1000)           // Blocks thread ❌
+FileInputStream.read()       // Blocks thread ❌
+Socket.read()                // Blocks thread ❌
+database.query()             // Blocks thread ❌
+HttpURLConnection.connect()  // Blocks thread ❌
+```
+ 
+**These are NOT safe on Main thread** because they actually block the thread.
+ 
+---
+ 
+## This is Why We Need Dispatchers.IO!
+```
+
 Channels
    1. Here are the notes on Kotlin Channels formatted as plain text so you can easily copy and paste them.
 
