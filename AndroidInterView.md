@@ -657,3 +657,38 @@ enum class Color(val rgb: Int) {
     BLUE(0x0000FF)
 }
 ```
+
+3. Abstract class is used to implement a interface for other classes who extend that abstract class , all the abstract methods should be implementated in that case . these abstract classes can not be intiated by themselves they need to be subclassed . absrtact class can also have non abs function which are not mandatory to override when extended , abstract classes are also state full holding constructors , fields etc 
+```kotlin
+abstract class Employee(val name: String) {   // Non-abstract property
+    abstract var experience: Int               // Abstract property
+
+    abstract fun salary(): Double              // Abstract method
+
+    fun employeeDetails() {                    // Non-abstract method
+        println("Name of the employee: $name")
+        println("Experience in years: $experience")
+        println("Annual Salary: ${salary()}")
+    }
+
+    abstract fun dateOfBirth(date: String)     // Abstract method
+}
+
+class Engineer(name: String, override var experience: Int) : Employee(name) {
+    override fun salary(): Double {
+        return 500000.0
+    }
+
+    override fun dateOfBirth(date: String) {
+        println("Date of Birth is: $date")
+    }
+}
+
+fun main() {
+    val eng = Engineer("Praveen", 2)
+    eng.employeeDetails()
+    eng.dateOfBirth("02 December 1994")
+}
+```
+
+4. interfaces are way less strutucal and controllable then abstract classes as they dont have constructors , all the methods within interface are must to be implementated when extended by a class . both abstract class and interface  are the skeleton classes which tell the classes what to do (override funs) but they don't tell how to do it .
