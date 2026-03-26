@@ -647,3 +647,13 @@ when (intent) {
     // ✅ No else needed - compiler knows these are ALL possibilities
 }
 ```
+
+2. Enums (enumerations) in Kotlin are a special kind of class that represents a fixed set of constants. Enums are useful when you need to define a type that can have a limited set of possible values . Enum class are used when you have to set of limited variables within a intent , the difference here is that sealed is unstructured and doesn't depend on the arguements from the parent class whereas all the  enum class variables must have same  constructor within them ,
+
+```kotlin
+enum class Color(val rgb: Int) {
+    RED(0xFF0000),
+    GREEN(0x00FF00),
+    BLUE(0x0000FF)
+}
+```
