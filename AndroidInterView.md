@@ -629,3 +629,21 @@ wrapper.execute("Hello")
 
 
 ```
+
+# Sealed class , enum class , data class , abstract class , interface .
+
+1. Sealed class are generally used when there are limited number of options in a task we want to handle it , these options are also generated during compile time so they are type safe also . example we use these when we want to handle navigation of a user .
+
+```kotlin
+sealed class Intent {
+    object Click : Intent()
+    data class Input(val text: String) : Intent()
+}
+
+// Compiler FORCES you to handle both!
+when (intent) {
+    Intent.Click -> handleClick()
+    is Intent.Input -> handleInput(intent.text)
+    // ✅ No else needed - compiler knows these are ALL possibilities
+}
+```
