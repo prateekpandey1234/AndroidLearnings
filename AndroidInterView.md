@@ -692,3 +692,16 @@ fun main() {
 ```
 
 4. interfaces are way less strutucal and controllable then abstract classes as they dont have constructors , all the methods within interface are must to be implementated when extended by a class . both abstract class and interface  are the skeleton classes which tell the classes what to do (override funs) but they don't tell how to do it .
+
+
+# Software architectures
+
+1. Separation of concerns is a software concept where each code peice has it's own responsibility and functionality . Rather than cramming everything code block within same file / function etc . UI should only do rendering and showing data nothing else , business logic , queries and server requests should be handles by different components . this allows testability , easy code , managable too.
+
+2. Uni directional Flow (UDF ) is a concept where there is single flow of data from source to ui while going through transformations and business logics , it helps in debuging and predicting data flow in code . the UI sends small events to source in case of some control checks.
+
+<img width="835" height="206" alt="Screenshot 2026-03-30 at 12 19 55 PM" src="https://github.com/user-attachments/assets/9a53b7b6-cfaf-4320-a5ad-d730ed51a26e" />
+
+3. Reactive Programming is when data is shared by source in form os stream/flow of data and the consumers subscribe to that data while observing the changes from it , this is very different from legacy callback based approach 
+
+
