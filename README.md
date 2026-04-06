@@ -598,8 +598,10 @@ Notifications
       Regular Token Validation - Periodically verify tokens are still valid before sending notifications
       RetryClaude can make mistakes. Please double-check responses. 
 
-Dependency Injection
+# Dependency Injection
+
    1. scoping and cutom components hilt android https://x.com/nagataro_san475/status/1928560079738917241 ,https://medium.com/androiddevelopers/hilt-adding-components-to-the-hierarchy-96f207d6d92d , https://medium.com/mindful-engineering/more-on-hilt-custom-components-custom-scope-f66c441c40c9
+   
    2. The Component Hierarchy (Like a Family Tree)
       Hilt organizes your app like a family tree. Each level lives for a different amount of time:
       
@@ -617,9 +619,106 @@ Dependency Injection
 
       👁️ View (Lives while that button/text exists)
       Components are those generated objects which help in generate abstract class which acts as a container full with dependcies and code ready to inject in classes with the            logic 
+      
    4. Entry points are like gateways to non hilt code to access the dragger code . just like we use @AndroidEntryPoint for activities,fragments and view . we have to provide a           entry point for . @AndroidEntryPoint also handle injection of depencies and how and when inside the android componenet . 
+   
    5. @Module or module is used to tell dragger that this is class or object which when installed within a component life cycle scope will help in coordinate depedency injections .
-      It acts as a configuration point, declaring which objects will be provided for injection and their scope. Essentially, a module tells the dependency injection framework how          to create and provide instances of classes, particularly those that might not be directly owned by your application
+      It acts as a configuration point, declaring which objects will be provided for injection and their scope. Essentially, a module tells the dependency injection framework how          to create and provide instances of classes, particularly those that might not be directly owned by your application.
+
+   6. Whenever we define @Provides,@Injects or @Binds over in our di code , these are called bindings which in simple terms means to tell our DI graph how to get the instance or how to create the instance from our DI graph .
+
+   7. @Binds annotation tells Hilt which implementation to use when it needs to provide an instance of an interface.
+   
+   8. @Provides is responsible for creating and returning instances of the corresponding dependencies. Using @Provides in a module allows us to have more control over how dependencies are created and provided so that we can customize initialization or configuration of dependencies.
+
+   9. There are use cases in Android when we would want to create multiple instances of a class with the same name but with different implementations. i.e. two functions have same return type but different body. For such scenarios Hilt provides the @Qualifier annotation.
+
+   10. every dependency is mapped in a binding map , where key - value pair is ,  KEY = (Return Type + Qualifier) and value is the binding , within a binding we hold what type of instance has to created , qualifier , scope and parent dependencies for every dependency in graph .
+
+   11. type of bindings :-
+   
+```kotlin
+
+      @Module
+      @InstallIn(SingletonComponent::class)
+      object NetworkModule {
+    
+    @Provides  // ← Creates a BINDING
+    fun provideRetrofit(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://api.example.com/")
+            .build()
+       }
+      }
+
+      BINDING CREATED:
+      Type: Retrofit
+      Provider: NetworkModule.provideRetrofit()
+      Scope: Unscoped (new instance each time)
+      Qualifier: None
+
+
+      class UserRepository @Inject constructor(
+       private val apiService: ApiService,
+       private val userDao: UserDao
+      ) {
+          // Class implementation
+      }
+
+      BINDING CREATED:
+      Type: UserRepository
+      Provider: UserRepository constructor
+      Dependencies: ApiService, UserDao
+      Scope: Unscoped
+      Qualifier: None
+
+
+      // Step 1: Define dependencies with bindings
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+    
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient {  // BINDING #1
+        return OkHttpClient.Builder().build()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideRetrofit(client: OkHttpClient): Retrofit {  // BINDING #2
+        return Retrofit.Builder()
+            .client(client)  // Depends on BINDING #1
+            .build()
+    }
+    
+    @Provides
+    fun provideApiService(retrofit: Retrofit): ApiService {  // BINDING #3
+        return retrofit.create(ApiService::class.java)
+    }
+}
+
+// Step 2: Repository with @Inject constructor creates a binding
+class UserRepository @Inject constructor(  // BINDING #4
+    private val apiService: ApiService,  // Needs BINDING #3
+    private val userDao: UserDao          // Needs BINDING #5
+)
+
+// Step 3: ViewModel requests injection
+@HiltViewModel
+class UserViewModel @Inject constructor(
+    private val repository: UserRepository  // Needs BINDING #4
+) : ViewModel() {
+    // ViewModel code
+}
+```
+
+   12. whenever we have simple bindings liek for interfaces where there is no much need of further dependencies , it is better to use @Binds which just says to DI graph to pass whatever the interface or dependency is providing directly , no need of factory code generation or anything . this also simple for interfaces as we don't need any type of initialisation there too. 
+
+   
+
+
+      
 
 State Hoisting in compose
    1. there are two types of compose, statefull and stateless .
