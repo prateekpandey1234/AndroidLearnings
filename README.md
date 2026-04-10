@@ -848,6 +848,10 @@ Flows
 # Coroutines
    1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
 
+   2. suspend keyword means the execution of the function is temporially paused so that current thread works on next line of code immediately , the suspend function then runs the blocking operation on different corutine allowing to free the main thread .
+
+   3. each suspend function has a continuation object within it which has knowledge about last execution point , contect of coroutine and etc . 
+
    ## The Critical Distinction: Coroutine vs Thread
  
 ### What You're Asking:
