@@ -489,19 +489,32 @@ Server Intiated Connections
 (https://drive.google.com/file/d/15IsHbXpyC8QswXnnjZwPH60kRGStH9MT/view?usp=sharing)
 (https://medium.com/androiddevelopers/under-the-hood-of-jetpack-compose-part-2-of-2-37b2c20c6cdd)
 1. jetpack compose is a declarative ui framework used  by kotlin and KMP developers , it is made up by 3 phases :-
+
    i . composition:- where ui treee structuce is made and it tracks any recompisition in future , establishes the relationships between components
+
    ii. layout :- designs the ui tree structuce and relationship in to architucture , decides size , position between the components 
+
    ii. drawing:- here we render our components into the layout we determined .
+
 2. thre recomposition is triggered by 2 things :-
+
    i. input changes :- when there is some in the input parameters function , the recomposition is triggered from compistion phase again .
+
    ii. state changes :- any changes with those paramters which combinated  with remember delegate also cause recomposition , compose monitors theirs change in state too.
+
 3. internal working on compose functions :-
    i. the functions which are anotated with @composable are compiled by Compose plugin compiler , the function itself is injected with composer object which contains information about the composition and track the it's state 
+
    ii. this function is porcessed and added into Slot table data structuce which is a tree like data structure storing nodes of every UI component in the sub tree sepearately 
+
    iii. this tree like behaviour then helps the compiler to find and recompose only those ui components which states are changed .
+
    iv. the composer is then passed to the child composable inside the that compose , each composer has his own runtime generated UUID which allows more unique identification .
+
    v. the remember invocations are those who store the states and compare the calculations between two states stored within those variables .
+
 4. the remember call is handled under hood by slot table differently , using that composer, the slot table tries to see if that UUID from compose has  a value , if not then we execute and store the initial value.
+
 5. the code is 
          fun Counter() {
             var count by remember { mutableStateOf(0) }  // THIS WORKS!
@@ -514,11 +527,72 @@ Server Intiated Connections
    <img width="678" height="200" alt="Screenshot 2026-01-27 at 12 54 16 PM" src="https://github.com/user-attachments/assets/9157be2f-83f0-43fd-89e4-3bbb4712cf8c" />
 
 7. the flow is handled like in the following flow :-
+
       i. the composer first see there is no value in slot table for that UUID and executes the initial lambda (by mutableStateOf(0)) and sets count as 0
+
       ii. then when we change value of a state holding object , recomposition is triggerred which using
+
       iii. the remember lambda function holds the previous state fed value , the compose then see that this remember lambda has some old value .
+
       iv. then new value is set to count after execution.
+
 8. each remember acts like a slot in the slot table , every composer looks for theat slot position in the slot table if there was old value or not .
+
+9. there is concept of skipping in compose , where the compose compiler marks composable functions as skippable/unskippable . the skippable here means that  
+    compose compiler will skip the recomposition of that compose which helps in optimization of compose layout . Compose can skip re-running that composable and its children,
+    reusing the previously emitted UI. This is a cornerstone of Compose’s performance strategy, as it prevents entire subtrees from re-rendering if their data remains constant. 
+
+10. to make a compose skippable there are 3 requirements :-
+
+    a. the parameters should be stable , primitive data type likes bool, int , string and lambda functions are marked stable . whereas collections such as list are marked unstable. 
+
+    b. the compose function should have unit return type . 
+
+    c. the compose should not be marked as @NonSkippable annotation . 
+
+11. there are 2 annotation in compose : @Stable and @Immutable ,
+    
+    a. @Stable is annotation which is used when we want to mention that the class marked as stable will have some public properties which will change after object is created and we have to notify compose about it , what it does is that compiler will not make any recomposition when changes happen 
+        in that object if not notified properly , to notify our changes we use mutableStateOf and give delegation to those properties 
+
+    b. @Immutable is annotation which is used to tell the compiler that this object and it's property are immutable also should be marked as stable for skipping unnescassry recompositions , means that you will always make a new copy of the data when you pass into the Composable .
+
+12. @Immutable annotation example :- 
+
+    ```kotlin
+    @Immutable
+    data class SomeViewState {
+    val list: List<String>
+    }
+    
+    @Composable
+    fun ShowSomething(data: SomeViewState) {}
+
+
+    class ViewModel {
+        val state: SomeViewState = SomeViewState(listOf())
+        fun removeLastItem() {
+            val newList = state.list.toMutableList().apply {
+                removeLast()
+            }
+            state = state.copy(
+                list = newList
+            )
+        }
+    }
+
+    ```
+    
+13. @Stabel annotation example :-
+    
+    ```kotlin
+    
+    @Stable
+    class SomeViewState {
+        var isLoading by mutableStateOf(false)
+    } 
+    
+    ```
 
    
 
@@ -545,6 +619,7 @@ Memory Leaks (https://proandroiddev.com/everything-you-need-to-know-about-memory
             b. Stack -> it's the data structure which keep static memory , it's a part of RAM , in short terms stack keeps track of all the process started in app with LIFO (Last                          in first out ) policy  , it stores reference to object allocated in the heap .
             c. Heap -> it's a dynamic memory sytem which is used by JVM to allocate the object classes which are create and referenced by stack for accessing the process 
    2. the JVM has made a superhero for helping us. We called it the Garbage Collector. He is going to do the hard work for us. And caring about detecting unused objects, release         them, and reclaim more space in the memory.
+   3. whenever the calls and objects are out of scope , the stack is released which holds the refernce of objects in the heap stack is released whenever configuration changes happens , exit and resume app  , language change , theme change etc . this means that objects in GC are unrefernced and hence are taken care by GC . 
    3. A memory leak happens when the stack still refers to unused objects in the heap ,  we see that when we have objects referenced from the stack but not in use anymore. The           garbage collector will never release or freeing them up from the memory cause it shows that those objects are in use while they are not.
    4. there are some ways we can cause memory leaks :-
             a. No proper life cycle management of background workers :- if we start a background work which takes 20 secs but user goes back / rotate screen still the old work
@@ -569,6 +644,8 @@ Navigation with compose :-
 
 Notifications
 
+
+0. device token are generated by the firebase sdk within the app 
 1. for push notifications , both android and IOS have their own device built in TCP , TLS(transport layer security) encryption which helps app's not having their own TCP connection     with third party PN providers like FCM and APNs
 
    Why Device Tokens Change:
@@ -847,10 +924,15 @@ Flows
 
 # Coroutines
    1. https://medium.com/androiddevelopers/coroutines-on-android-part-i-getting-the-background-3e0e54d20bb
+   2. https://proandroiddev.com/viewmodelscope-internals-a-deep-dive-into-androids-threading-magic-260aa42cd4c1 
+   3. https://blog.shreyaspatil.dev/understanding-dispatchers-main-and-mainimmediate/
 
    2. suspend keyword means the execution of the function is temporially paused so that current thread works on next line of code immediately , the suspend function then runs the blocking operation on different corutine allowing to free the main thread .
 
    3. each suspend function has a continuation object within it which has knowledge about last execution point , contect of coroutine and etc . 
+  4. every suspend function is added back into a messageQueue where they run one by one , this handled by Looper every thread has one looper assigned to it , which runs indefiently in android .  
+5. looper has one job to execute the messageQueues one by one , if we switch context using withContext , the data switching is done by Handler where it passes the data on to original Looper/thread after finishing work on separate thread 
+6. Under the hood, Dispatchers.Main simply grabs the Handler attached to the Main thread's Looper, packages your coroutine code into a standard Runnable (a task), and tells the Handler, "Hey, put this at the back of the MessageQueue." Eventually, the Looper finishes whatever it was doing, pulls your coroutine off the queue, and runs it.
 
    ## The Critical Distinction: Coroutine vs Thread
  
