@@ -633,20 +633,36 @@ wrapper.execute("Hello")
 # Sealed class , enum class , data class , abstract class , interface .
 
 1. Sealed class are generally used when there are limited number of options in a task we want to handle it , these options are also generated during compile time so they are type safe also . example we use these when we want to handle navigation of a user .
-
-```kotlin
-sealed class Intent {
-    object Click : Intent()
-    data class Input(val text: String) : Intent()
-}
-
-// Compiler FORCES you to handle both!
-when (intent) {
-    Intent.Click -> handleClick()
-    is Intent.Input -> handleInput(intent.text)
-    // ✅ No else needed - compiler knows these are ALL possibilities
-}
-```
+    sealed interfaces are similar too , they are used whenever we have finite options of implementation during our compile time but sealed interface can not have constructors and we can implement multiple sealed interfaces onto single child . A sealed class is a class that can be subclassed, but only inside the same file where it is declared.
+    ```kotlin
+    sealed class Intent {
+        object Click : Intent()
+        data class Input(val text: String) : Intent()
+    }
+    
+    class dummy:Intent()
+    
+    // Compiler FORCES you to handle both!
+    when (intent) {
+        Intent.Click -> handleClick()
+        is Intent.Input -> handleInput(intent.text)
+        // ✅ No else needed - compiler knows these are ALL possibilities
+    }
+    
+    sealed interface ErrorState {
+        object NetworkError : ErrorState
+        object DatabaseError : ErrorState
+    }
+    
+    fun handleError(error: ErrorState) {
+        // The compiler knows only NetworkError and DatabaseError exist.
+        // No 'else' branch is needed!
+        when (error) {
+            is ErrorState.NetworkError -> showToast("Check your wifi")
+            is ErrorState.DatabaseError -> showToast("Storage full")
+        }
+    }
+    ```
 
 2. Enums (enumerations) in Kotlin are a special kind of class that represents a fixed set of constants. Enums are useful when you need to define a type that can have a limited set of possible values . Enum class are used when you have to set of limited variables within a intent , the difference here is that sealed is unstructured and doesn't depend on the arguements from the parent class whereas all the  enum class variables must have same  constructor within them ,
 
@@ -659,39 +675,41 @@ enum class Color(val rgb: Int) {
 ```
 
 3. Abstract class is used to implement a interface for other classes who extend that abstract class , all the abstract methods should be implementated in that case . these abstract classes can not be intiated by themselves they need to be subclassed . absrtact class can also have non abs function which are not mandatory to override when extended , abstract classes are also state full holding constructors , fields etc 
-```kotlin
-abstract class Employee(val name: String) {   // Non-abstract property
-    abstract var experience: Int               // Abstract property
 
-    abstract fun salary(): Double              // Abstract method
-
-    fun employeeDetails() {                    // Non-abstract method
-        println("Name of the employee: $name")
-        println("Experience in years: $experience")
-        println("Annual Salary: ${salary()}")
+    ```kotlin
+    abstract class Employee(val name: String) {   // Non-abstract property
+        abstract var experience: Int               // Abstract property
+    
+        abstract fun salary(): Double              // Abstract method
+    
+        fun employeeDetails() {                    // Non-abstract method
+            println("Name of the employee: $name")
+            println("Experience in years: $experience")
+            println("Annual Salary: ${salary()}")
+        }
+    
+        abstract fun dateOfBirth(date: String)     // Abstract method
     }
-
-    abstract fun dateOfBirth(date: String)     // Abstract method
-}
-
-class Engineer(name: String, override var experience: Int) : Employee(name) {
-    override fun salary(): Double {
-        return 500000.0
+    
+    class Engineer(name: String, override var experience: Int) : Employee(name) {
+        override fun salary(): Double {
+            return 500000.0
+        }
+    
+        override fun dateOfBirth(date: String) {
+            println("Date of Birth is: $date")
+        }
     }
-
-    override fun dateOfBirth(date: String) {
-        println("Date of Birth is: $date")
+    
+    fun main() {
+        val eng = Engineer("Praveen", 2)
+        eng.employeeDetails()
+        eng.dateOfBirth("02 December 1994")
     }
-}
-
-fun main() {
-    val eng = Engineer("Praveen", 2)
-    eng.employeeDetails()
-    eng.dateOfBirth("02 December 1994")
-}
-```
+    ```
 
 4. interfaces are way less strutucal and controllable then abstract classes as they dont have constructors , all the methods within interface are must to be implementated when extended by a class . both abstract class and interface  are the skeleton classes which tell the classes what to do (override funs) but they don't tell how to do it .
+
 
 
 # Software architectures

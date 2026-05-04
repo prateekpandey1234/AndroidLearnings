@@ -553,7 +553,7 @@ Server Intiated Connections
 11. there are 2 annotation in compose : @Stable and @Immutable ,
     
     a. @Stable is annotation which is used when we want to mention that the class marked as stable will have some public properties which will change after object is created and we have to notify compose about it , what it does is that compiler will not make any recomposition when changes happen 
-        in that object if not notified properly , to notify our changes we use mutableStateOf and give delegation to those properties 
+        in that object if not notified properly , to notify our changes we use mutableStateOf and give delegation to those properties .
 
     b. @Immutable is annotation which is used to tell the compiler that this object and it's property are immutable also should be marked as stable for skipping unnescassry recompositions , means that you will always make a new copy of the data when you pass into the Composable .
 
@@ -583,7 +583,7 @@ Server Intiated Connections
 
     ```
     
-13. @Stabel annotation example :-
+13. @Stable annotation example :-
     
     ```kotlin
     
