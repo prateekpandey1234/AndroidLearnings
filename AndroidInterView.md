@@ -666,13 +666,13 @@ wrapper.execute("Hello")
 
 2. Enums (enumerations) in Kotlin are a special kind of class that represents a fixed set of constants. Enums are useful when you need to define a type that can have a limited set of possible values . Enum class are used when you have to set of limited variables within a intent , the difference here is that sealed is unstructured and doesn't depend on the arguements from the parent class whereas all the  enum class variables must have same  constructor within them ,
 
-```kotlin
-enum class Color(val rgb: Int) {
-    RED(0xFF0000),
-    GREEN(0x00FF00),
-    BLUE(0x0000FF)
-}
-```
+    ```kotlin
+    enum class Color(val rgb: Int) {
+        RED(0xFF0000),
+        GREEN(0x00FF00),
+        BLUE(0x0000FF)
+    }
+    ```
 
 3. Abstract class is used to implement a interface for other classes who extend that abstract class , all the abstract methods should be implementated in that case . these abstract classes can not be intiated by themselves they need to be subclassed . absrtact class can also have non abs function which are not mandatory to override when extended , abstract classes are also state full holding constructors , fields etc 
 
