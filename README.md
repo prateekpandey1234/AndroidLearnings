@@ -825,11 +825,45 @@ Observers
       issue with this is that it will only emit value once inside current lifecycle if previous and current value are same
    5. flow is a oberver but it will only fetch data when collector is called like when button clicked you have to trigger flow.collect to get latest data , it utilises coroutines
       , allows transformation and mapping .
-   6. Shared flow : It emits all the values and does not care about the distinct from the previous item. It emits consecutive repeated values also.
+   6. Shared flow : It emits all the values and does not care about the distinct from the previous item. It emits consecutive repeated values also. shared flow is a hot flow
    7. In shared Flow , there are ways we can handle the stream :-
          a. with replay we can manage what amount of last events we can give to new subscribers to stream
          b. Shared flow also have concept of buffer which is a sort of temprory storage which stores references to the data/model we are emitting and it is used in case the collectors are             buy processing the ui with previous data
          c. we can also anage if that buffer is full then we can remove oldest data to stop overflowing nd = allow latest data to emit
+   8. SharedFlow is used for broadcasting events or messages to multiple consumers. Unlike StateFlow, it does not hold a current state but instead allows values to be emitted and shared with multiple collectors. It is used for one-time events like navigation events, UI updates, etc. 
+
+   9. Cold Flow
+
+           Definition: A cold flow is a type of flow that only produces values when there is an active collector. This means that the flow’s code is executed independently for each collector, and each collector receives the emitted values from the beginning.
+
+           Characteristics:
+        
+           On-demand emission: A cold flow starts emitting values only when a collector (subscriber) actively collects themIndependent execution for each collector.
+           Independent collectors: Each collector receives the entire flow from the beginning, independently.
+           No shared state: There’s no shared state between collectors, ensuring isolation.
+           Example: flow { emit(1); emit(2) } is a cold flow.
+           Use cases:
+        
+           Data loading: Fetching data from a network or database when needed.
+           Independent data processing: Each subscriber requires its own processing logic.
+           Avoiding shared state issues: Preventing data inconsistencies between multiple subscribers.
+
+   10. Hot Flow
+
+           Definition: A hot flow emits values regardless of whether there are active collectors. It’s like a broadcast where multiple listeners can subscribe and receive the latest value.
+
+           Characteristics:
+           Continuous emission: A hot flow emits values regardless of whether there are collectors or not.
+           Shared state: Multiple collectors can share the same flow and receive values from the point they subscribed.
+           Potential for backressure: If data is produced faster than consumed, backPressure issues can arise.
+
+           Examples: SharedFlow, StateFlow
+
+           Use cases:
+           UI state management (StateFlow)
+           Shared data streams (SharedFlow)
+           Real-time updates (e.g., location, sensor data)
+           Any scenario where multiple consumers need to receive the same data.
 
 
 Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
