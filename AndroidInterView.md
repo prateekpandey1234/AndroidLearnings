@@ -712,6 +712,109 @@ While Coroutines are the modern standard, RxJava still has its place.
 
 
 
+
+# Extension functions in Kotlin
+
+1. if a extension function with same name to member function , then the member function overrides the extension function itself . 
+2. below are some extension functions we use :-
+3. apply , Use case: Configuring an object. It returns the object itself.
+
+    ```Kotlin
+    // Great for setting up UI components or intents
+    val intent = Intent(context, MainActivity::class.java).apply {
+    putExtra("USER_ID", 123)
+    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    ```
+4. also
+Use case: Performing side-effects (like logging or debugging) without changing the object.
+
+    ```Kotlin
+    val result = calculateComplexValue().also {
+    Log.d("Calculation", "The result was $it")
+    }
+    ```
+5. run Use case: Similar to let, but exposes the object as this instead of it. Great for executing a block of code that requires multiple properties of the object.
+
+    ```Kotlin
+    val dbConfig = DatabaseConfig("localhost", 8080)
+    val url = dbConfig.run {
+    "jdbc:mysql://$host:$port/users"
+    }
+    ```
+6. map  Use case: Transforming every item in a list into something else.
+
+    ```Kotlin
+    val numbers = listOf(1, 2, 3)
+    val doubled = numbers.map { it * 2 } // [2, 4, 6]
+    ```
+7. filter & filterNot
+Use case: Removing items from a list based on a condition.
+
+    ```Kotlin
+    val users = listOf(User(age = 18), User(age = 25), User(age = 16))
+    val adults = users.filter { it.age >= 18 }
+    ```
+
+8. firstOrNull / find  Use case: Safely getting the first item that matches a condition without crashing if nothing matches.
+
+    ```Kotlin
+    val task = taskList.firstOrNull { it.id == targetId }
+    ```
+
+9. groupBy Use case: Converting a flat list into a Map grouped by a specific key.
+
+    ```Kotlin
+    val words = listOf("apple", "ape", "banana", "bat")
+    val groupedByFirstLetter = words.groupBy { it.first() }
+    // { 'a'=[apple, ape], 'b'=[banana, bat] }
+    ```
+10. String & CharSequence Extensions
+   isNullOrEmpty / isNullOrBlank
+   Use case: Validating user input from forms. isNullOrBlank also checks for strings that are just whitespace.
+
+    ```Kotlin
+    if (passwordInput.isNullOrBlank()) {
+    showError("Password cannot be empty")
+    }
+    ```
+11. substringAfter / substringBefore
+Use case: Cleanly parsing strings without dealing with complex index math.
+
+    ```Kotlin
+    val email = "prateek@example.com"
+    val domain = email.substringAfter("@") // "example.com"
+    ```
+12. Null Safety & Conditions
+   takeIf
+   Use case: Returning the object if it matches a condition, otherwise returning null.
+
+    ```Kotlin
+    val input = "Hello"
+    // Returns "Hello" if length > 3, otherwise null
+    val validString = input.takeIf { it.length > 3 }
+    ```
+13. takeUnless
+Use case: The exact opposite of takeIf. Returns the object unless it matches the condition.
+
+    ```Kotlin
+    val input = "Error"
+    val validData = input.takeUnless { it == "Error" } // Returns null
+    ```
+14. Writing Your Own
+   The real magic is that you can write extension functions for classes you don't even own (like third-party libraries or Android SDK classes) to make your code much cleaner.
+
+    ```Kotlin
+    // A custom extension function on the Android Context
+    fun Context.showToast(message: String) {
+    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+    
+    // Usage anywhere in an Activity/Fragment:
+    showToast("Profile Updated!")
+    
+    ```
+
 # Software architectures
 
 1. Separation of concerns is a software concept where each code peice has it's own responsibility and functionality . Rather than cramming everything code block within same file / function etc . UI should only do rendering and showing data nothing else , business logic , queries and server requests should be handles by different components . this allows testability , easy code , managable too.
