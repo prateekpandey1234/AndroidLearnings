@@ -550,7 +550,7 @@ Server Intiated Connections
 
     c. the compose should not be marked as @NonSkippable annotation . 
 
-11. there are 2 annotation in compose : @Stable and @Immutable ,
+11. there are 2 annotation in compose : @Stable and @Immutable (https://medium.com/@dobri.kostadinov/understanding-immutable-and-stable-annotations-in-jetpack-compose-c71488fc7cdf),
     
     a. @Stable is annotation which is used when we want to mention that the class marked as stable will have some public properties which will change after object is created and we have to notify compose about it , what it does is that compiler will not make any recomposition when changes happen 
         in that object if not notified properly , to notify our changes we use mutableStateOf and give delegation to those properties .
@@ -864,6 +864,7 @@ Observers
            Shared data streams (SharedFlow)
            Real-time updates (e.g., location, sensor data)
            Any scenario where multiple consumers need to receive the same data.
+   11. for state flow , always use .updateValue extension function for thread safety . same goes for .post value in live data for thread safety 
 
 
 Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
@@ -887,6 +888,24 @@ Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
           .map { it * 2 }          // Intermediate
           .take(10)                // Intermediate
           .toList()                // Terminal
+
+
+Lazy and Lateinit
+
+1. lateinit:
+
+    a. lateinit can only be used with var type variables. 
+
+    b. By using this keyword, you indicate that you can assign the initial value of a variable later.
+
+    b. If you try to access a variable defined with lateinit before its initial value is assigned, you will get a runtime error.
+2. lazy:
+
+    a. lazy is used with val type variables.
+
+    b. By using this keyword, you lazily initialize a variable, meaning the initial value of the variable is calculated only at the first access and not recalculated during subsequent accesses.
+
+    c. The variable is not accessed until the initial value is calculated.
 
 Side Effects
    1. LaunchedEffects is triggered evey time when value of it's is changed and utilises coroutinescope to run any IO operatons
