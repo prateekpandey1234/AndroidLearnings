@@ -831,247 +831,245 @@ Use case: The exact opposite of takeIf. Returns the object unless it matches the
 
 ### `lateinit`
 
-Modifier for `var` properties — you promise to initialize it before use.
+1. Modifier for `var` properties — you promise to initialize it before use.
 
-- Only works with `var` and non-nullable types
-- Cannot be used with primitives (`Int`, `Boolean`, etc.)
-- Throws `UninitializedPropertyAccessException` if accessed before init
+   - Only works with `var` and non-nullable types
+   - Cannot be used with primitives (`Int`, `Boolean`, etc.)
+   - Throws `UninitializedPropertyAccessException` if accessed before init
 
-```kotlin
-lateinit var binding: ActivityMainBinding
-lateinit var adapter: MyAdapter
+       ```kotlin
+       lateinit var binding: ActivityMainBinding
+       lateinit var adapter: MyAdapter
+    
+       // Check before access
+       if (::adapter.isInitialized) {
+           adapter.notifyDataSetChanged()
+       }
+       ```
 
-// Check before access
-if (::adapter.isInitialized) {
-    adapter.notifyDataSetChanged()
-}
-```
-
-**Used for:** View Binding, Adapters, ViewModel, Hilt/Dagger injected fields — anything set during a lifecycle method like `onCreate`.
+2. **Used for:** View Binding, Adapters, ViewModel, Hilt/Dagger injected fields — anything set during a lifecycle method like `onCreate`.
 
 
 ### `by lazy`
 
-Delegate for `val` properties — initializes on first access, then caches the result.
+1. Delegate for `val` properties — initializes on first access, then caches the result.
 
-- Only works with `val`
-- Works with all types including primitives
-- Thread-safe by default
+   - Only works with `val`
+   - Works with all types including primitives
+   - Thread-safe by default
 
-```kotlin
-val database: AppDatabase by lazy {
-    Room.databaseBuilder(context, AppDatabase::class.java, "app_db").build()
-}
-```
+    ```kotlin
+    val database: AppDatabase by lazy {
+        Room.databaseBuilder(context, AppDatabase::class.java, "app_db").build()
+    }
+    ```
 
-**Used for:** Room Database, Retrofit, Gson, SharedPreferences — anything that is self-contained and expensive to create.
+2. **Used for:** Room Database, Retrofit, Gson, SharedPreferences — anything that is self-contained and expensive to create.
 
  
 ### When to use which
 
-Use `lateinit` when the value is set from outside (e.g. in `onCreate`, or injected).  
-Use `lazy` when the value can initialize itself and never needs to change.
+1. Use `lateinit` when the value is set from outside (e.g. in `onCreate`, or injected).  
+2. Use `lazy` when the value can initialize itself and never needs to change.
 
-```kotlin
-class WallFragment : Fragment() {
-
-    lateinit var adapter: MyWallAdapter   // set in onViewCreated
-
-    val viewModel: WallViewModel by lazy {
-        ViewModelProvider(this)[WallViewModel::class.java]
+    ```kotlin
+    class WallFragment : Fragment() {
+    
+        lateinit var adapter: MyWallAdapter   // set in onViewCreated
+    
+        val viewModel: WallViewModel by lazy {
+            ViewModelProvider(this)[WallViewModel::class.java]
+        }
+    
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+            adapter = MyWallAdapter(requireContext(), emptyList())
+        }
     }
+    ```
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        adapter = MyWallAdapter(requireContext(), emptyList())
-    }
-}
-```
-
----
-
+ 
 ### Threading and Deadlocks
 
 #### `lateinit` on multiple threads
 
-`lateinit` has no built-in thread safety. If two threads initialize or read the same `lateinit var` simultaneously, you can get a race condition or stale value.
+1. `lateinit` has no built-in thread safety. If two threads initialize or read the same `lateinit var` simultaneously, you can get a race condition or stale value.
 
-```kotlin
-// Unsafe — Thread A and Thread B may both pass isInitialized check
-if (!::adapter.isInitialized) {
-    adapter = MyWallAdapter(...)  // initialized twice
-}
-```
+    ```kotlin
+    // Unsafe — Thread A and Thread B may both pass isInitialized check
+    if (!::adapter.isInitialized) {
+        adapter = MyWallAdapter(...)  // initialized twice
+    }
+    ```
 
-Fix — use `@Volatile` for visibility, or wrap in `synchronized`:
+2. Fix — use `@Volatile` for visibility, or wrap in `synchronized`:
 
-```kotlin
-@Volatile
-lateinit var adapter: MyWallAdapter
-
-// Or guard initialization
-fun initAdapter() {
-    synchronized(this) {
-        if (!::adapter.isInitialized) {
-            adapter = MyWallAdapter(context, emptyList())
+    ```kotlin
+    @Volatile
+    lateinit var adapter: MyWallAdapter
+    
+    // Or guard initialization
+    fun initAdapter() {
+        synchronized(this) {
+            if (!::adapter.isInitialized) {
+                adapter = MyWallAdapter(context, emptyList())
+            }
         }
     }
-}
-```
+    ```
 
-In Android, always initialize UI-related `lateinit` vars on the main thread and never write to them from a background thread.
+3. In Android, always initialize UI-related `lateinit` vars on the main thread and never write to them from a background thread.
 
  
 ### `by lazy` thread safety modes
 
-`lazy` has three modes:
+1. `lazy` has three modes:
+    
+    | Mode | Behavior | Use when |
+    |---|---|---|
+    | `SYNCHRONIZED` (default) | Lock ensures only one thread initializes | Shared across threads |
+    | `NONE` | No lock, fastest | Single thread only |
+    | `PUBLICATION` | Multiple threads may init, first result wins | Rare concurrent reads |
 
-| Mode | Behavior | Use when |
-|---|---|---|
-| `SYNCHRONIZED` (default) | Lock ensures only one thread initializes | Shared across threads |
-| `NONE` | No lock, fastest | Single thread only |
-| `PUBLICATION` | Multiple threads may init, first result wins | Rare concurrent reads |
-
-```kotlin
-// Default — safe, slight lock overhead
-val retrofit by lazy { buildRetrofit() }
-
-// Fastest — only if accessed from one thread
-val helper by lazy(LazyThreadSafetyMode.NONE) { buildHelper() }
-```
+    ```kotlin
+    // Default — safe, slight lock overhead
+    val retrofit by lazy { buildRetrofit() }
+    
+    // Fastest — only if accessed from one thread
+    val helper by lazy(LazyThreadSafetyMode.NONE) { buildHelper() }
+    ```
 
  
 ### Deadlock with `by lazy`
 
-The default `SYNCHRONIZED` mode can deadlock if the lambda accesses another `lazy` property that is also waiting on a lock — creating a circular dependency.
+1. The default `SYNCHRONIZED` mode can deadlock if the lambda accesses another `lazy` property that is also waiting on a lock — creating a circular dependency.
 
-```kotlin
-// Deadlock — a waits for b, b waits for a
-val a: String by lazy { b }
-val b: String by lazy { a }
-```
+    ```kotlin
+    // Deadlock — a waits for b, b waits for a
+    val a: String by lazy { b }
+    val b: String by lazy { a }
+    ```
 
-Another common Android case — a background thread locks a `lazy` property during init, then tries to post work to the main thread, while the main thread is already blocked waiting on that same lock.
+2. Another common Android case — a background thread locks a `lazy` property during init, then tries to post work to the main thread, while the main thread is already blocked waiting on that same lock.
 
-```kotlin
-// Risky — if accessed from multiple threads during cold start
-val database: AppDatabase by lazy {
-    Room.databaseBuilder(context, AppDatabase::class.java, "db").build()
-}
-```
+    ```kotlin
+    // Risky — if accessed from multiple threads during cold start
+    val database: AppDatabase by lazy {
+        Room.databaseBuilder(context, AppDatabase::class.java, "db").build()
+    }
+    ```
 
-Fix — initialize on a known single thread using `NONE` mode and enforce access only from that dispatcher:
-
-```kotlin
-val database: AppDatabase by lazy(LazyThreadSafetyMode.NONE) {
-    Room.databaseBuilder(context, AppDatabase::class.java, "db").build()
-}
-
-// Always access from IO dispatcher
-withContext(Dispatchers.IO) {
-    database.userDao().getAll()
-}
-```
+3. Fix — initialize on a known single thread using `NONE` mode and enforce access only from that dispatcher:
+    
+    ```kotlin
+    val database: AppDatabase by lazy(LazyThreadSafetyMode.NONE) {
+        Room.databaseBuilder(context, AppDatabase::class.java, "db").build()
+    }
+    
+    // Always access from IO dispatcher
+    withContext(Dispatchers.IO) {
+        database.userDao().getAll()
+    }
+    ```
 
 # Weak vs Soft References in Android 
 
 [Finally understanding how references work in Android and Java — Google Developer Experts, Medium](https://medium.com/google-developer-experts/finally-understanding-how-references-work-in-android-and-java-26a0d9c92f83)
 
-Java and Android have 4 reference types: Strong, Soft, Weak, and Phantom.
+1. Java and Android have 4 reference types: Strong, Soft, Weak, and Phantom.
 Strong is the default. The other three give the Garbage Collector (GC) permission to reclaim the object under different conditions.
 
 
-### Strong Reference (default)
+2. ### Strong Reference (default)
 
-When you create an object, it is a strong reference by default. The GC will never collect it while it is in scope.
+   - When you create an object, it is a strong reference by default. The GC will never collect it while it is in scope.
+    
+        ```kotlin
+        val user = User()  // strong — GC will never collect this while referenced
+        ```
 
-```kotlin
-val user = User()  // strong — GC will never collect this while referenced
-```
+3. ### Weak Reference
 
-
-### Weak Reference
-
-When you create a weak reference to an object and the GC runs, it will clear the object from memory immediately if there are no other strong references to it.
-
-```kotlin
-val weakContext = WeakReference<Context>(context)
-
-// Always null-check before use
-val ctx = weakContext.get()
-if (ctx != null) {
-    // safe to use
-}
-```
-
-**Common use case — AsyncTask holding Activity context:**
-
-When an Activity is destroyed, an AsyncTask holding a `WeakReference` to it allows
-the Activity to be collected by the GC, preventing a memory leak.
-
-```kotlin
-class MyTask(context: Context) : AsyncTask<Void, Void, String>() {
-    private val weakContext = WeakReference(context)
-
-    override fun doInBackground(vararg params: Void?): String = "result"
-
-    override fun onPostExecute(result: String) {
-        val ctx = weakContext.get() ?: return  // Activity may already be gone
-        Toast.makeText(ctx, result, Toast.LENGTH_SHORT).show()
-    }
-}
-```
+    - When you create a weak reference to an object and the GC runs, it will clear the object from memory immediately if there are no other strong references to it.
+    
+        ```kotlin
+        val weakContext = WeakReference<Context>(context)
+        
+        // Always null-check before use
+        val ctx = weakContext.get()
+        if (ctx != null) {
+            // safe to use
+        }
+        ```
+    
+    **Common use case — AsyncTask holding Activity context:**
+    
+    - When an Activity is destroyed, an AsyncTask holding a `WeakReference` to it allows
+    the Activity to be collected by the GC, preventing a memory leak.
+    
+        ```kotlin
+        class MyTask(context: Context) : AsyncTask<Void, Void, String>() {
+            private val weakContext = WeakReference(context)
+        
+            override fun doInBackground(vararg params: Void?): String = "result"
+        
+            override fun onPostExecute(result: String) {
+                val ctx = weakContext.get() ?: return  // Activity may already be gone
+                Toast.makeText(ctx, result, Toast.LENGTH_SHORT).show()
+            }
+        }
+        ```
 
  
-### Soft Reference
+4. ### Soft Reference
+    
+    - Think of `SoftReference` as a stronger `WeakReference`. A `WeakReference` is collected
+    at the next GC run, but a `SoftReference` stays in memory until the system is
+    actually running low — there is no risk of `OutOfMemoryError` while it is alive.
+    
+        ```kotlin
+        val softCache = SoftReference<Bitmap>(loadLargeBitmap())
+        
+        val bitmap = softCache.get()
+        if (bitmap != null) {
+            imageView.setImageBitmap(bitmap)  // still in memory
+        } else {
+            // GC cleared it due to low memory — reload
+        }
+        ```
+    
+    - **Best use case:** Image or data caches. As long as memory is plentiful, you do not
+    need to manually remove objects. The GC handles eviction automatically when needed.
+    
 
-Think of `SoftReference` as a stronger `WeakReference`. A `WeakReference` is collected
-at the next GC run, but a `SoftReference` stays in memory until the system is
-actually running low — there is no risk of `OutOfMemoryError` while it is alive.
+5. ### When to use which
 
-```kotlin
-val softCache = SoftReference<Bitmap>(loadLargeBitmap())
-
-val bitmap = softCache.get()
-if (bitmap != null) {
-    imageView.setImageBitmap(bitmap)  // still in memory
-} else {
-    // GC cleared it due to low memory — reload
-}
-```
-
-**Best use case:** Image or data caches. As long as memory is plentiful, you do not
-need to manually remove objects. The GC handles eviction automatically when needed.
-
-
-### When to use which
-
-Use `WeakReference` when you hold a reference to something with a longer lifecycle
-than yours — most commonly a `Context`, `Activity`, or a listener — and you do not
-want to prevent it from being destroyed.
-
-Use `SoftReference` when you are building a cache of expensive objects (bitmaps,
-parsed data) and you want the OS to manage eviction for you instead of doing it manually.
-
-```kotlin
-// WeakReference — listener that should not keep Activity alive
-class MyPresenter(view: MyView) {
-    private val weakView = WeakReference(view)
-
-    fun onDataLoaded(data: List<Item>) {
-        weakView.get()?.showData(data)
-    }
-}
-
-// SoftReference — bitmap cache
-class BitmapCache {
-    private val cache = HashMap<String, SoftReference<Bitmap>>()
-
-    fun put(key: String, bitmap: Bitmap) {
-        cache[key] = SoftReference(bitmap)
-    }
-
-    fun get(key: String): Bitmap? = cache[key]?.get()
-}
-```
+    - Use `WeakReference` when you hold a reference to something with a longer lifecycle
+    than yours — most commonly a `Context`, `Activity`, or a listener — and you do not
+    want to prevent it from being destroyed.
+    
+    - Use `SoftReference` when you are building a cache of expensive objects (bitmaps,
+    parsed data) and you want the OS to manage eviction for you instead of doing it manually.
+    
+        ```kotlin
+        // WeakReference — listener that should not keep Activity alive
+        class MyPresenter(view: MyView) {
+            private val weakView = WeakReference(view)
+        
+            fun onDataLoaded(data: List<Item>) {
+                weakView.get()?.showData(data)
+            }
+        }
+        
+        // SoftReference — bitmap cache
+        class BitmapCache {
+            private val cache = HashMap<String, SoftReference<Bitmap>>()
+        
+            fun put(key: String, bitmap: Bitmap) {
+                cache[key] = SoftReference(bitmap)
+            }
+        
+            fun get(key: String): Bitmap? = cache[key]?.get()
+        }
+        ```
 
