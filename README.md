@@ -1368,6 +1368,7 @@ DataBase
       SQLite first writes all the existing data to the rollback journal
       Then it deletes the data from the main database
       If insert() later fails, SQLite reads from the rollback journal to restore the original data
+   9. you can do same transaction with @Transaction annotation in your DAO file 
    10. so what does sql in room does is that it stores a journal logs of the queries it ran like if it deleted some data , it stores that in disk . this also is done in paging-cache way          to avoid lockdowns and heavy db time taking .
 
 
