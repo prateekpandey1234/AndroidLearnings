@@ -1369,6 +1369,23 @@ DataBase
       Then it deletes the data from the main database
       If insert() later fails, SQLite reads from the rollback journal to restore the original data
    9. you can do same transaction with @Transaction annotation in your DAO file 
+   10. In room to know if your insert query work successfully , the DAO query returns the ROWID of data added :-
+
+               val rowId:Long = notesDao.insertNote(newNote) 
+               if (rowId > -1L) {
+               // Success!
+               } else {
+               // Failed to insert
+               }
+       for update and delete query you get int data type :-
+      
+                   val rowsDeleted:Int = notesDao.deleteNote(note)
+                   if (rowsDeleted > 0) {
+                   // Success! Note was deleted.
+                   } else {
+                   // Note wasn't found in the database.
+                   }
+                
    10. so what does sql in room does is that it stores a journal logs of the queries it ran like if it deleted some data , it stores that in disk . this also is done in paging-cache way          to avoid lockdowns and heavy db time taking .
 
 
