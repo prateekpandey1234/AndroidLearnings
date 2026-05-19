@@ -639,6 +639,19 @@ Navigation with compose :-
       b. can be controlled with the use of flows 
       c. dont store navcontroller or make navigations in viewModel
       d. keep observing events of navigation near NavHost then use navigation there .
+
+   2. passing arguements in navigation :- 
+
+          composable("note_list") {
+          NoteList(uiState){id->
+          navController.navigate("note_item/$id")
+          }
+          }
+          composable(route = "note_item/{id}", arguments = listOf(navArgument("id"){type = NavType.StringType})) {
+            val noteId = navController.currentBackStackEntry?.arguments?.getString("id")
+
+          NotePage()
+          }
             
         
 
