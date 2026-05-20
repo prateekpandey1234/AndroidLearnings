@@ -1247,6 +1247,34 @@ ViewModel
    3.  private val _isLoading  = MutableLiveData<Boolean>()
        val isLoading  :LiveData<Boolean> = _isLoading
       this allows immutablitiy of isLoading by outer access , only edited inside the viewModel even when _isLoading is mutable
+   4. In android , we can not create our own viewModel it;s created by ViewModelProviders and by default the viewModels have  
+        empty constructors . if we want to add arguements into our viewModel other than using DI , we have to use ViewModel Factory 
+   5. view model factory :-
+        ```kotlin
+      
+        class UserViewModelFactory(private val userId: String) : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                  // Check if the system is asking for the UserViewModel
+                  if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return UserViewModel(userId) as T // Create it with the argument!
+                    }
+                  throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+      
+        viewModel = ViewModelProvider(this, factory)[UserViewModel::class.java]
+        
+        private val viewModel: UserViewModel by viewModels {
+            // You can fetch dynamic data from Intents here if needed
+            val userIdFromIntent = intent.getStringExtra("USER_ID") ?: "default_id"
+        
+            // Return the instantiated factory
+            UserViewModelFactory(userIdFromIntent)
+        }
+
+        ```
+            
 
 
 Use case
