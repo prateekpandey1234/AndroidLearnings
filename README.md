@@ -878,6 +878,9 @@ Observers
            Real-time updates (e.g., location, sensor data)
            Any scenario where multiple consumers need to receive the same data.
    11. for state flow , always use .updateValue extension function for thread safety . same goes for .post value in live data for thread safety 
+   12. .value in StateFlow is thread safe but it can race condition like if multiple threads change value at same time . 
+   13. .update in state flow is atomic operation , which means another thread operation doesn't over write other thread operation , 
+        
 
 
 Sequence(https://medium.com/android-news/kotlin-sequences-ac6dc7c883d3)
