@@ -880,6 +880,8 @@ Observers
    11. for state flow , always use .updateValue extension function for thread safety . same goes for .post value in live data for thread safety 
    12. .value in StateFlow is thread safe but it can race condition like if multiple threads change value at same time . 
    13. .update in state flow is atomic operation , which means another thread operation doesn't over write other thread operation , 
+   14. The live data .postValue is asynchronous not atomic , which can lead to race condition and some value might drop if rendering happens to quickly .  
+        
         
 
 
