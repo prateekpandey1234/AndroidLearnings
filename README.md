@@ -593,7 +593,80 @@ Server Intiated Connections
     } 
     
     ```
+14. Modifier ordering  are applied last-to-first, inside-to-outside. (https://zsmb.co/remembering-modifier-order/)
 
+
+
+
+# Permissions in Android 
+
+1. the code here is as :-
+
+    ```kotlin
+    @Composable
+    fun AskPermission(){
+        val context = LocalContext.current
+    
+        val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION);
+    
+   
+   //checking if permission is already available
+        var hasPermission by remember{
+            mutableStateOf(permissions.all { context.checkSelfPermission(it)== PackageManager.PERMISSION_GRANTED }
+            )
+        }
+    // in legacy ui , we would use SIMPLE 
+   // ActivityCompat.requestPermissions(
+    //            this,
+    //            arrayOf(
+    //                android.Manifest.permission.ACCESS_FINE_LOCATION
+    //            ),
+    //            permissionCode
+    //        )
+   //override fun onRequestPermissionsResult(
+    //        requestCode: Int,
+    //        permissions: Array<out String>,
+    //        grantResults: IntArray
+    //    ) {
+    //        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    //        if (requestCode == permissionCode) {
+    //            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+    //                getLocation()
+    //            }
+    //        }
+    //    }
+    //  but in compose we have to launch that
+
+        val permissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions(),
+            onResult = {map->
+                hasPermission = map.values.all { it }
+            }
+        )
+    
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (hasPermission) {
+                Text(text = "Permissions Granted! Ready to start tracking.")
+                // TODO: Start your location Flow/Service here
+            } else {
+                Text(text = "Location permission is required to track your run.")
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        // Launch the OS permission dialog
+                        permissionLauncher.launch(permissions)
+                    }
+                ) {
+                    Text(text = "Grant Permissions")
+                }
+            }
+        }
+    }
+    ```
    
 
 # AndroidLearnings
