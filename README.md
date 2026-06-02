@@ -759,7 +759,7 @@ Notifications
       Store Tokens Server-Side - Keep updated tokens in your backend database
       Handle Token Refresh Gracefully - Don't assume tokens remain constant
       Regular Token Validation - Periodically verify tokens are still valid before sending notifications
-      RetryClaude can make mistakes. Please double-check responses. 
+      RetryC 
 
 # Dependency Injection
 
