@@ -747,6 +747,32 @@ Use case: Performing side-effects (like logging or debugging) without changing t
     ```Kotlin
     val numbers = listOf(1, 2, 3)
     val doubled = numbers.map { it * 2 } // [2, 4, 6]
+    fun updateNote(updatedNote: NotesModel) {
+    _state.update { currentState -> 
+        
+        // 1. Update the source of truth list
+        val newUnfilteredList = currentState.unFilteredList.map { note ->
+            if (note.id == updatedNote.id) {
+                updatedNote // Replace with the edited note
+                // Alternatively, if you only want to change a specific field:
+                // note.copy(text = "New text") 
+            } else {
+                note // Keep the original note
+            }
+        }
+
+        // 2. Update the filtered list so the UI updates immediately
+        val newFilteredList = currentState.filteredList.map { note ->
+            if (note.id == updatedNote.id) updatedNote else note
+        }
+
+        // 3. Return a new copy of the state
+        currentState.copy(
+            unFilteredList = newUnfilteredList,
+            filteredList = newFilteredList
+        )
+    }
+}
     ```
 7. filter & filterNot
 Use case: Removing items from a list based on a condition.
