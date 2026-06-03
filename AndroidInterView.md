@@ -1099,3 +1099,430 @@ Strong is the default. The other three give the Garbage Collector (GC) permissio
         }
         ```
 
+
+# MVC vs MVP vs MVVM vs MVI
+
+1. ## MVC — Model View Controller
+
+    ### Main Idea
+   
+    The oldest of the four. The **Controller** handles user input, manipulates the **Model**, and the **View** reads from the Model directly. The View and Controller are often tightly coupled — in Android, the `Activity`/`Fragment` typically acts as both.
+    
+    ### Components
+    
+    **Model**
+    Holds your data and business logic. No knowledge of the UI.
+    ```kotlin
+    data class User(val id: Int, val name: String, val email: String)
+    
+    class UserRepository {
+        fun getUser(id: Int): User = User(id, "Alice", "alice@email.com")
+    }
+    ```
+    
+    **View**
+    Displays the data. In Android MVC, the XML layout is the View — but `Activity` bleeds into both View and Controller roles.
+    ```xml
+    <!-- activity_main.xml -->
+    <TextView android:id="@+id/tvUserName" ... />
+    <Button android:id="@+id/btnLoad" ... />
+    ```
+    
+    **Controller**
+    Handles user input and coordinates between View and Model. In Android this is typically your `Activity` or `Fragment`.
+    ```kotlin
+    class MainActivity : AppCompatActivity() {
+        private val repository = UserRepository()
+    
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            setContentView(R.layout.activity_main)
+    
+            btnLoad.setOnClickListener {
+                val user = repository.getUser(1)        // talks to Model
+                tvUserName.text = user.name             // updates View directly
+            }
+        }
+    }
+    ```
+    
+    ### Data Flow
+    ```
+    User Input → Controller → Model → View (reads Model or Controller pushes update)
+    ```
+    
+    ### Pros & Cons
+    | ✅ Pros | ❌ Cons |
+    |---|---|
+    | Simple and familiar | Activity/Fragment becomes a "God class" |
+    | Fast to prototype | View and Controller are tightly coupled |
+    | No extra boilerplate | Very hard to unit test |
+    | | Poor separation of concerns in Android |
+
+
+2. ## MVP — Model View Presenter
+
+    ### Main Idea
+   
+    MVP fixes MVC's coupling problem by introducing a **Presenter** — a plain Kotlin/Java class that sits between the View and Model. The View is dumb (only renders) and communicates with the Presenter through a **Contract interface**. This makes the Presenter fully unit testable.
+    
+    ### Components
+    
+    **Contract (Interface)**
+    Defines the communication contract between View and Presenter.
+    ```kotlin
+    interface UserContract {
+        interface View {
+            fun showUser(name: String, email: String)
+            fun showError(message: String)
+            fun showLoading(isLoading: Boolean)
+        }
+    
+        interface Presenter {
+            fun loadUser(id: Int)
+            fun onDestroy()
+        }
+    }
+    ```
+    
+    **Model**
+    Same as MVC — pure data and business logic.
+    ```kotlin
+    class UserRepository {
+        fun getUser(id: Int): User = User(id, "Alice", "alice@email.com")
+    }
+    ```
+    
+    **Presenter**
+    Pure Kotlin class. Holds a reference to the View interface (not the Activity directly).
+    ```kotlin
+    class UserPresenter(
+        private val view: UserContract.View,
+        private val repository: UserRepository
+    ) : UserContract.Presenter {
+    
+        override fun loadUser(id: Int) {
+            view.showLoading(true)
+            try {
+                val user = repository.getUser(id)
+                view.showUser(user.name, user.email)
+            } catch (e: Exception) {
+                view.showError("Failed to load user")
+            } finally {
+                view.showLoading(false)
+            }
+        }
+    
+        override fun onDestroy() {
+            // clean up references to avoid memory leaks
+        }
+    }
+    ```
+    
+    **View (Activity/Fragment)**
+    Implements the View contract. Only renders — no logic.
+    ```kotlin
+    class MainActivity : AppCompatActivity(), UserContract.View {
+        private lateinit var presenter: UserPresenter
+    
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            setContentView(R.layout.activity_main)
+            presenter = UserPresenter(this, UserRepository())
+            btnLoad.setOnClickListener { presenter.loadUser(1) }
+        }
+    
+        override fun showUser(name: String, email: String) {
+            tvUserName.text = name
+            tvEmail.text = email
+        }
+    
+        override fun showError(message: String) {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+    
+        override fun showLoading(isLoading: Boolean) {
+            progressBar.isVisible = isLoading
+        }
+    
+        override fun onDestroy() {
+            presenter.onDestroy()
+            super.onDestroy()
+        }
+    }
+    ```
+    
+    ### Data Flow
+    ```
+    User Input → View → Presenter → Model → Presenter → View
+    ```
+    
+    ### Pros & Cons
+    | ✅ Pros | ❌ Cons |
+    |---|---|
+    | Clean separation of concerns | Contract interfaces add boilerplate |
+    | Presenter is easily unit testable | Presenter holds View reference (memory leak risk) |
+    | View is passive and dumb | Manual lifecycle management |
+    | Clear contracts between layers | Doesn't survive configuration changes natively |
+
+
+3. ## MVVM — Model View ViewModel
+    
+    ### Main Idea
+    
+    MVVM replaces the Presenter with a **ViewModel** that exposes observable state. The View *observes* the ViewModel — it doesn't get called directly. This means the ViewModel has **no reference to the View** at all, making it lifecycle-safe and extremely testable. This is the **Google-recommended architecture** for Android.
+    
+    ### Components
+    
+    **Model (Repository + Data Sources)**
+    ```kotlin
+    data class User(val id: Int, val name: String, val email: String)
+    
+    class UserRepository(private val apiService: ApiService) {
+        suspend fun getUser(id: Int): Result<User> {
+            return try {
+                Result.success(apiService.fetchUser(id))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+    ```
+    
+    **ViewModel**
+    Exposes `StateFlow` or `LiveData`. Has no reference to Context or View. Survives configuration changes.
+    ```kotlin
+    data class UserUiState(
+        val isLoading: Boolean = false,
+        val user: User? = null,
+        val errorMessage: String? = null
+    )
+    
+    @HiltViewModel
+    class UserViewModel @Inject constructor(
+        private val repository: UserRepository
+    ) : ViewModel() {
+    
+        private val _uiState = MutableStateFlow(UserUiState())
+        val uiState: StateFlow<UserUiState> = _uiState.asStateFlow()
+    
+        fun loadUser(id: Int) {
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true) }
+                repository.getUser(id)
+                    .onSuccess { user ->
+                        _uiState.update { it.copy(isLoading = false, user = user) }
+                    }
+                    .onFailure { error ->
+                        _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
+                    }
+            }
+        }
+    }
+    ```
+    
+    **View (Activity/Fragment or Composable)**
+    Observes state and renders it. No logic.
+    ```kotlin
+    // Fragment with StateFlow
+    class UserFragment : Fragment() {
+        private val viewModel: UserViewModel by viewModels()
+    
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+    
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.uiState
+                    .flowWithLifecycle(viewLifecycleOwner.lifecycle)
+                    .collect { state ->
+                        progressBar.isVisible = state.isLoading
+                        state.user?.let {
+                            tvUserName.text = it.name
+                            tvEmail.text = it.email
+                        }
+                        state.errorMessage?.let {
+                            Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+            }
+    
+            btnLoad.setOnClickListener { viewModel.loadUser(1) }
+        }
+    }
+    
+    // Jetpack Compose version
+    @Composable
+    fun UserScreen(viewModel: UserViewModel = hiltViewModel()) {
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+    
+        when {
+            state.isLoading -> CircularProgressIndicator()
+            state.user != null -> UserContent(user = state.user!!)
+            state.errorMessage != null -> ErrorText(state.errorMessage!!)
+        }
+    }
+    ```
+    
+    ### Data Flow
+    ```
+    User Input → ViewModel (updates State) → View observes State → re-renders
+    ```
+    
+    ### Pros & Cons
+    | ✅ Pros | ❌ Cons |
+    |---|---|
+    | ViewModel has no View reference | State can be complex to manage for large screens |
+    | Survives configuration changes | Learning curve for reactive programming |
+    | Google/Jetpack native support | Multiple `StateFlow`s can get messy |
+    | Excellent testability | Overkill for tiny, throwaway screens |
+    | Works great with Compose |  |
+
+
+4. ## MVI — Model View Intent
+
+    ### Main Idea
+    
+    MVI takes MVVM further with a **strictly unidirectional data flow**. The View emits **Intents** (user actions), the ViewModel/Reducer processes them into a **new immutable State**, and the View re-renders that state. There is one single source of truth — the State. This is especially powerful with Jetpack Compose.
+    
+    ### Components
+    
+    **Intent (User Actions)**
+    A sealed class representing every possible user action.
+    ```kotlin
+    sealed class UserIntent {
+        data class LoadUser(val id: Int) : UserIntent()
+        object RetryLoad : UserIntent()
+        object ClearError : UserIntent()
+    }
+    ```
+    
+    **State (Single Immutable State)**
+    One data class representing the entire screen state.
+    ```kotlin
+    data class UserState(
+        val isLoading: Boolean = false,
+        val user: User? = null,
+        val errorMessage: String? = null
+    )
+    ```
+    
+    **Effect (One-time Side Effects)**
+    Optional — for things that shouldn't be in persistent state like navigation or toasts.
+    ```kotlin
+    sealed class UserEffect {
+        data class ShowToast(val message: String) : UserEffect()
+        data class NavigateTo(val route: String) : UserEffect()
+    }
+    ```
+    
+    **ViewModel (Intent Processor + State Reducer)**
+    Receives Intents, processes them, and emits a new State.
+    ```kotlin
+    @HiltViewModel
+    class UserViewModel @Inject constructor(
+        private val repository: UserRepository
+    ) : ViewModel() {
+    
+        private val _state = MutableStateFlow(UserState())
+        val state: StateFlow<UserState> = _state.asStateFlow()
+    
+        private val _effect = Channel<UserEffect>()
+        val effect = _effect.receiveAsFlow()
+    
+        fun processIntent(intent: UserIntent) {
+            when (intent) {
+                is UserIntent.LoadUser -> loadUser(intent.id)
+                is UserIntent.RetryLoad -> loadUser(1)
+                is UserIntent.ClearError -> _state.update { it.copy(errorMessage = null) }
+            }
+        }
+    
+        private fun loadUser(id: Int) {
+            viewModelScope.launch {
+                _state.update { it.copy(isLoading = true, errorMessage = null) }
+                repository.getUser(id)
+                    .onSuccess { user ->
+                        _state.update { it.copy(isLoading = false, user = user) }
+                        _effect.send(UserEffect.ShowToast("User loaded!"))
+                    }
+                    .onFailure { error ->
+                        _state.update { it.copy(isLoading = false, errorMessage = error.message) }
+                    }
+            }
+        }
+    }
+    ```
+    
+    **View**
+    Only emits Intents and renders State. Zero logic.
+    ```kotlin
+    @Composable
+    fun UserScreen(viewModel: UserViewModel = hiltViewModel()) {
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        val context = LocalContext.current
+    
+        // Handle one-time effects
+        LaunchedEffect(Unit) {
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    is UserEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    is UserEffect.NavigateTo -> { /* handle navigation */ }
+                }
+            }
+        }
+    
+        Column {
+            if (state.isLoading) CircularProgressIndicator()
+    
+            state.user?.let { user ->
+                Text(text = user.name)
+                Text(text = user.email)
+            }
+    
+            state.errorMessage?.let { error ->
+                Text(text = error, color = Color.Red)
+                Button(onClick = { viewModel.processIntent(UserIntent.RetryLoad) }) {
+                    Text("Retry")
+                }
+            }
+    
+            Button(onClick = { viewModel.processIntent(UserIntent.LoadUser(1)) }) {
+                Text("Load User")
+            }
+        }
+    }
+    ```
+    
+    ### Data Flow
+    ```
+    View → Intent → ViewModel (Reducer) → new State → View re-renders
+             ↑___________________________________|  (strictly one direction)
+    ```
+    
+    ### Pros & Cons
+    | ✅ Pros | ❌ Cons |
+    |---|---|
+    | Strictly unidirectional — very predictable | More boilerplate than MVVM |
+    | Single source of truth (one State) | Can feel over-engineered for simple screens |
+    | Easy to log, replay, and debug | State explosions on complex screens |
+    | Excellent for Compose | Steeper learning curve |
+    | Time-travel debugging is possible | |
+
+
+
+> **Pro tip:** MVVM and MVI are not mutually exclusive. Many production apps use MVVM as the overall architecture and adopt MVI-style patterns on specific complex screens.
+
+## Summary Table
+
+| | MVC | MVP | MVVM | MVI |
+|---|---|---|---|---|
+| **Main idea** | Controller coordinates View & Model | Presenter mediates via interface | ViewModel exposes observable state | Unidirectional: Intent → State → View |
+| **Data flow** | Bidirectional | Bidirectional | Mostly unidirectional | Strictly unidirectional |
+| **View awareness** | Controller knows View | Presenter holds View interface | ViewModel has NO View reference | ViewModel has NO View reference |
+| **State management** | Manual | Manual | StateFlow / LiveData | Single immutable State |
+| **Testability** | ❌ Poor | ✅ Good | ✅ Excellent | ✅ Excellent |
+| **Boilerplate** | Low | Medium | Medium | High |
+| **Config change survival** | ❌ No | ❌ No | ✅ Yes (ViewModel) | ✅ Yes (ViewModel) |
+| **Compose friendly** | ❌ No | ❌ No | ✅ Yes | ✅✅ Best fit |
+| **Best for** | Prototypes | Legacy/Medium apps | Most modern apps | Complex screens |
+| **Google recommended** | ❌ | ❌ | ✅ | ✅ (with Compose) |
