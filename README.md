@@ -359,7 +359,8 @@ Going Offline First :-
 1. storing data locally first then showing to Ui , basically following SSOT pattern (single source
     of truth)
 2. for local storage have a eviction policy , LRU (least recently used mostly size based) , TTL (time to 
-    live , daily how many data ?) , custom startegy 
+    live , daily how many data ?) , custom startegy
+3. use reactive components like flow to syncronize ui whenever user comes back online like using flows , using repos and workermanagers as well
 
 
 Optiimistic writes 
