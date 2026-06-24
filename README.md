@@ -797,6 +797,12 @@ Notifications
 
    9. There are use cases in Android when we would want to create multiple instances of a class with the same name but with different implementations. i.e. two functions have same return type but different body. For such scenarios Hilt provides the @Qualifier annotation.
 
+   //qualifier is a meta which allows multiple binding of same return type by defining our own
+// annotaions
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class StockQualifier
+
    10. every dependency is mapped in a binding map , where key - value pair is ,  KEY = (Return Type + Qualifier) and value is the binding , within a binding we hold what type of instance has to created , qualifier , scope and parent dependencies for every dependency in graph .
 
    11. type of bindings :-
