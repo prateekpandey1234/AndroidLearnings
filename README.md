@@ -907,8 +907,16 @@ State Hoisting in compose
    8. derived state of is also an inline function which helps to update ui from any state changes but these state changes are very frequent like scrolling state changes , what it        does is that it helps in stopping execssive recompositions and only recomposes when certain condition or threashold is reached for that state which changing many times .
       using normal remember will cause mulitple recomposition so we use derived state which creates a new state itself to stop those extra recompositions .
       (https://medium.com/androiddevelopers/jetpack-compose-when-should-i-use-derivedstateof-63ce7954c11b)
-   9. you can use remember(key1,key2) to assign that data against that specific id or rememberSaveable(key1) to survive more
-      
+   9. you can use remember(key1,key2) to assign that data against that specific id or rememberSaveable(key1) to survive more , 
+
+   10. key1 is simply a dependency or a trigger. It can be any variable (a String, an Int, a Boolean, an Object).
+
+   During every recomposition, Compose looks at the key1 you passed in and compares it to the key1 from the previous composition using standard Kotlin equality (== or .equals()).
+   
+   If key1 is the same, Compose skips the lambda block and returns the cached value.
+   
+   If key1 is different, Compose re-executes the lambda block, caches the new result, and returns it.
+         
    
 Observers
    1. there are 4 types of observers : Live Data , StateFlow , Flow and SharedFlow
