@@ -1907,3 +1907,193 @@ Lets you trigger GC on demand so you can distinguish "real leak" from "garbage w
 ## 8. Correlate Memory with App Events
 On the timeline you can see activity/fragment lifecycle events alongside memory usage, so you can pinpoint exactly which user action caused a spike or leak.
 
+
+# Clean Architecture in Android
+
+**Clean Architecture** is a software design philosophy introduced by Robert C. Martin (Uncle Bob). Its main goal is to separate concerns into layers so that business logic is independent of frameworks, UI, and databases — making the app easier to test, maintain, and scale.
+
+## Core Principle
+
+> The Dependency Rule: **source code dependencies can only point inward.** Inner layers should know nothing about outer layers.
+
+This means your business logic (the core of the app) doesn't depend on Android framework classes, databases, or UI code — instead, those outer layers depend on the core.
+
+## The Layers
+
+Android's typical implementation of Clean Architecture uses **three main layers**:
+
+```
+┌─────────────────────────────────────┐
+│         Presentation Layer          │  (UI, ViewModel)
+│  ┌─────────────────────────────┐    │
+│  │        Domain Layer          │   │  (Use Cases, Entities)
+│  │  ┌─────────────────────┐     │   │
+│  │  │    (Pure Kotlin)     │     │   │
+│  │  └─────────────────────┘     │   │
+│  └───────────────────────────────┘  │
+└─────────────────────────────────────┘
+              ▲
+              │ implements
+┌─────────────────────────────────────┐
+│           Data Layer                │  (Repository impl, API, DB)
+└─────────────────────────────────────┘
+```
+
+### 1. Presentation Layer (UI Layer)
+
+**Responsibility:** Display data to the user and handle user input.
+
+**Contains:**
+- Activities / Fragments / Composables
+- ViewModels
+- UI State classes
+- Mappers to convert domain models → UI models
+
+**Rules:**
+- Depends on the Domain layer (calls Use Cases).
+- Should NOT contain business logic — only UI logic (formatting, navigation, state management).
+- Uses `ViewModel` + `StateFlow`/`LiveData` to expose state to the UI in a lifecycle-aware way.
+
+```kotlin
+class UserProfileViewModel(
+    private val getUserUseCase: GetUserUseCase
+) : ViewModel() {
+    private val _uiState = MutableStateFlow<UserUiState>(UserUiState.Loading)
+    val uiState: StateFlow<UserUiState> = _uiState
+
+    fun loadUser(id: String) {
+        viewModelScope.launch {
+            _uiState.value = try {
+                UserUiState.Success(getUserUseCase(id).toUiModel())
+            } catch (e: Exception) {
+                UserUiState.Error(e.message)
+            }
+        }
+    }
+}
+```
+
+### 2. Domain Layer
+
+**Responsibility:** Contains the core business logic of the app. This is the heart of Clean Architecture.
+
+**Contains:**
+- **Entities** — plain data classes representing core business objects (no Android/framework dependencies).
+- **Use Cases (Interactors)** — single-responsibility classes that encapsulate one specific piece of business logic.
+- **Repository interfaces** — abstractions that define *what* data operations are needed, without specifying *how*.
+
+**Rules:**
+- Pure Kotlin/Java — **no Android framework dependencies** (no `Context`, no `Room`, no `Retrofit`).
+- Doesn't know about the Presentation or Data layer implementations.
+- This layer is the most stable and most testable part of the app.
+
+```kotlin
+// Entity
+data class User(val id: String, val name: String, val email: String)
+
+// Repository interface (abstraction)
+interface UserRepository {
+    suspend fun getUser(id: String): User
+}
+
+// Use Case
+class GetUserUseCase(private val repository: UserRepository) {
+    suspend operator fun invoke(id: String): User {
+        return repository.getUser(id)
+    }
+}
+```
+
+### 3. Data Layer
+
+**Responsibility:** Provides data to the domain layer from various sources (network, database, cache).
+
+**Contains:**
+- **Repository implementations** — implement the interfaces defined in the Domain layer.
+- **Data sources** — remote (API via Retrofit/Ktor) and local (Room, DataStore, SharedPreferences).
+- **DTOs (Data Transfer Objects)** and mappers to convert them into Domain entities.
+
+**Rules:**
+- Implements the repository interface declared in the Domain layer (Dependency Inversion).
+- Decides where data comes from (network vs. cache vs. database) and how to combine sources.
+- Domain layer never knows *which* data source is used — it just calls the interface.
+
+```kotlin
+class UserRepositoryImpl(
+    private val api: UserApiService,
+    private val dao: UserDao
+) : UserRepository {
+    override suspend fun getUser(id: String): User {
+        val cached = dao.getUser(id)
+        return if (cached != null) {
+            cached.toDomain()
+        } else {
+            val remote = api.fetchUser(id)
+            dao.insert(remote.toEntity())
+            remote.toDomain()
+        }
+    }
+}
+```
+
+## Why the Dependency Direction Matters
+
+```
+Presentation  ──depends on──▶  Domain  ◀──depends on── Data
+```
+
+Notice that **both Presentation and Data depend on Domain**, not the other way around. This is achieved through **Dependency Inversion**:
+- Domain defines `UserRepository` (an interface).
+- Data provides `UserRepositoryImpl` (the concrete implementation).
+- Presentation only ever talks to the Domain layer's Use Cases — never directly to Data.
+
+This is usually wired together using a Dependency Injection framework like **Hilt**, **Koin**, or **Dagger**.
+
+## Benefits
+
+| Benefit | Why |
+|---|---|
+| **Testability** | Domain layer has no Android dependencies, so it can be unit tested with plain JUnit — no emulator needed. |
+| **Maintainability** | Changes to UI or database don't ripple through business logic. |
+| **Scalability** | New features can be added as new Use Cases without touching unrelated code. |
+| **Framework independence** | You could swap Retrofit for Ktor, or Room for another DB, without touching Domain or Presentation. |
+| **Team collaboration** | Different developers can work on different layers with clear contracts (interfaces) between them. |
+
+## Common Project Structure
+
+```
+com.example.app
+├── presentation/
+│   ├── userprofile/
+│   │   ├── UserProfileScreen.kt
+│   │   ├── UserProfileViewModel.kt
+│   │   └── UserUiState.kt
+├── domain/
+│   ├── model/
+│   │   └── User.kt
+│   ├── repository/
+│   │   └── UserRepository.kt
+│   └── usecase/
+│       └── GetUserUseCase.kt
+├── data/
+│   ├── remote/
+│   │   ├── UserApiService.kt
+│   │   └── UserDto.kt
+│   ├── local/
+│   │   ├── UserDao.kt
+│   │   └── UserEntity.kt
+│   └── repository/
+│       └── UserRepositoryImpl.kt
+└── di/
+    └── AppModule.kt
+```
+
+## Common Mistakes to Avoid
+
+- Putting business logic in ViewModels instead of Use Cases.
+- Letting the Domain layer import Android or Room/Retrofit classes.
+- Skipping the Repository interface and calling `UserRepositoryImpl` directly from Presentation.
+- Over-engineering small apps with excessive layers/Use Cases for every trivial operation — Clean Architecture adds structure, but should scale with app complexity.
+- Not mapping between DTOs, Entities, and UI models — leaking network/database models all the way up to the UI.
+
+
