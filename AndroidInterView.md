@@ -1866,3 +1866,44 @@ Strong is the default. The other three give the Garbage Collector (GC) permissio
 | **Compose friendly** | ❌ No | ❌ No | ✅ Yes | ✅✅ Best fit |
 | **Best for** | Prototypes | Legacy/Medium apps | Most modern apps | Complex screens |
 | **Google recommended** | ❌ | ❌ | ✅ | ✅ (with Compose) |
+
+
+#  Memory Profiler 
+
+The Android Studio Memory Profiler is a tool for inspecting and diagnosing your app's memory behavior. Here's what it actually does:
+
+## 1. Show Real-Time Memory Usage
+Displays a live graph of how much memory your app is using while you interact with it, broken down into:
+- Java/Kotlin memory
+- Native memory
+- Graphics memory
+- Stack memory
+- Code memory
+
+## 2. Track Garbage Collection (GC) Events
+Shows when GC runs on the timeline, so you can see if memory drops back down after collection — or if it doesn't, which hints at a leak.
+
+## 3. Capture Heap Dumps
+Takes a full snapshot of every object alive in memory at a given moment. You can then:
+- See counts of each class instance
+- Check shallow size and retained size (how much memory an object — and everything it holds — is using)
+- Trace the **reference chain** to see exactly what's holding onto an object (this is how you find *why* something isn't being garbage collected)
+
+## 4. Record Allocations Over Time
+Tracks every object allocated during a time window, showing:
+- What method/call stack created each object
+- How many objects were allocated
+- Helps you find code that's creating too many short-lived objects (causing GC churn/jank)
+
+## 5. Record Native Memory Allocations
+For apps using NDK/native code, C/C++ allocations, or libraries (image/video, etc.) that allocate native memory.
+
+## 6. Compare Multiple Heap Dumps
+Take two snapshots (e.g., before and after repeating an action 10 times) and compare instance counts to confirm whether memory growth is a real leak vs. normal behavior.
+
+## 7. Force Garbage Collection Manually
+Lets you trigger GC on demand so you can distinguish "real leak" from "garbage waiting to be collected."
+
+## 8. Correlate Memory with App Events
+On the timeline you can see activity/fragment lifecycle events alongside memory usage, so you can pinpoint exactly which user action caused a spike or leak.
+
