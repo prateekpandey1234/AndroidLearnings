@@ -289,3 +289,274 @@ jobs:
 2. Click the failing job → expand the failing step → read the log.
 3. Download the `maestro-results` artifact from the run summary for screenshots/reports of the failed flows.
 **Official docs:** [docs.github.com/actions](https://docs.github.com/en/actions) · Workflow syntax reference: [docs.github.com/actions/reference/workflow-syntax-for-github-actions](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions)
+
+
+# Jenkins, Fastlane & Maestro — What, How and Why
+A tool-by-tool guide to the three pillars of a modern mobile CI/CD + testing setup. Each section answers three questions: **What is it? How does it work? Why do we need it?**
+---
+## The 30-Second Overview
+These three tools solve three different problems, and they compose into one pipeline:
+| Tool | Category | Problem it solves | One-liner |
+|---|---|---|---|
+| **Jenkins** | CI/CD Server (Orchestrator) | "Who runs the automation, when, and where?" | A self-hosted automation server that triggers and runs jobs (build, test, deploy) on code events or schedules |
+| **Fastlane** | Build & Release Automation | "How do I build, sign and ship my app without 50 manual steps?" | A Ruby-based toolchain that scripts the entire mobile build/sign/upload workflow into one command |
+| **Maestro** | Mobile UI Testing | "Does my app actually work when a human taps through it?" | A declarative (YAML) UI testing framework that drives a real app on an emulator/device like a user would |
+```mermaid
+flowchart LR
+    DEV[Developer pushes code] --> J[Jenkins<br/><i>the orchestrator</i>]
+    J -->|"calls"| F[Fastlane<br/><i>the builder/shipper</i>]
+    J -->|"calls"| M[Maestro<br/><i>the UI tester</i>]
+    F -->|APK / IPA| STORE[Play Store / App Store /<br/>Firebase / TestFlight]
+    M -->|pass / fail report| J
+    J -->|status + artifacts| DEV
+```
+> **Mental model:** Jenkins is the *factory manager*, Fastlane is the *assembly line*, Maestro is the *quality inspector*.
+---
+## 1. Jenkins
+### What is it?
+Jenkins is an **open-source automation server** written in Java. It's one of the oldest and most widely used CI/CD (Continuous Integration / Continuous Delivery) tools. You host it yourself (on a VM, bare metal, or Kubernetes), and it runs "jobs" — arbitrary sequences of steps like *checkout code → build → test → deploy*.
+Key vocabulary:
+- **Controller (master):** the brain — serves the web UI, schedules jobs, stores config.
+- **Agent (node/worker):** the muscle — a machine where jobs actually execute. A Mac agent for iOS builds, a Linux agent for Android builds, etc.
+- **Job / Pipeline:** a defined unit of automation.
+- **Jenkinsfile:** a text file (Groovy DSL) checked into your repo that describes the pipeline as code.
+- **Plugin:** Jenkins's superpower and curse — 1,800+ plugins integrate it with Git, Slack, Docker, Android SDK, everything.
+### How does it work?
+1. **A trigger fires** — a push/PR webhook from GitHub/GitLab, a cron schedule (nightly build), another job finishing, or a human clicking "Build Now".
+2. **The controller schedules the job** onto an agent that has the right labels (e.g. `android`, `mac-mini-ios`).
+3. **The agent executes the pipeline stages** defined in the Jenkinsfile — each stage is a shell command, a script, or a plugin step.
+4. **Results are reported back** — console logs, test reports, build artifacts (APK/IPA), and notifications (Slack/email).
+```mermaid
+flowchart TB
+    subgraph Triggers
+        T1[Git push / PR webhook]
+        T2["Cron schedule (nightly)"]
+        T3[Manual 'Build Now']
+    end
+    subgraph Jenkins Controller
+        Q[Job queue & scheduler]
+        UI[Web UI + REST API]
+        CFG[Pipeline config<br/>Jenkinsfile from repo]
+    end
+    subgraph Agents
+        A1["Linux agent<br/>(Android builds)"]
+        A2["macOS agent<br/>(iOS builds)"]
+        A3["Docker agent<br/>(ephemeral)"]
+    end
+    T1 --> Q
+    T2 --> Q
+    T3 --> Q
+    CFG --> Q
+    Q -->|dispatch by label| A1
+    Q -->|dispatch by label| A2
+    Q -->|dispatch by label| A3
+    A1 --> R[Artifacts, test reports,<br/>Slack/email notifications]
+    A2 --> R
+    A3 --> R
+    R --> UI
+```
+A minimal declarative **Jenkinsfile** for a mobile app looks like this:
+```groovy
+pipeline {
+    agent { label 'android' }
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+        stage('Unit Tests') {
+            steps { sh './gradlew testDebugUnitTest' }
+        }
+        stage('Build') {
+            steps { sh 'bundle exec fastlane build_release' }   // 👈 Jenkins delegates to Fastlane
+        }
+        stage('UI Tests') {
+            steps { sh 'maestro test .maestro/' }               // 👈 Jenkins delegates to Maestro
+        }
+        stage('Distribute') {
+            when { branch 'main' }
+            steps { sh 'bundle exec fastlane deploy_beta' }
+        }
+    }
+    post {
+        always  { junit '**/test-results/**/*.xml' }
+        failure { slackSend channel: '#builds', message: "Build failed: ${env.BUILD_URL}" }
+    }
+}
+```
+### Why use it?
+- **Automation of repetition:** no human should run builds/tests by hand on every commit. Machines don't forget steps.
+- **Fast feedback:** a broken commit is flagged in minutes, not discovered days later by a teammate.
+- **Single source of truth:** every build is reproducible, logged, numbered and auditable. "It works on my machine" dies here.
+- **Self-hosted control:** unlike GitHub Actions / Bitrise cloud runners, you own the hardware. Crucial for iOS (needs macOS machines), for private networks, and for cost control at scale.
+- **Infinitely extensible:** plugins + arbitrary shell steps mean it can orchestrate *anything* — which is exactly why it's the layer that calls Fastlane and Maestro rather than replacing them.
+**Trade-offs to know:** you maintain it yourself (upgrades, plugins, agent machines), the UI is dated, and Groovy pipelines have a learning curve. Cloud alternatives (GitHub Actions, GitLab CI, Bitrise, CircleCI) trade control for convenience.
+---
+## 2. Fastlane
+### What is it?
+Fastlane is an **open-source build & release automation toolchain for mobile apps** (Android and iOS), written in Ruby and now maintained under the Mobile Native Foundation. It packages the dozens of fiddly steps between "code compiles" and "app is in users' hands" into scriptable, repeatable commands called **lanes**.
+Key vocabulary:
+- **Fastfile:** the Ruby file where you define your lanes (lives in `fastlane/` in your repo).
+- **Lane:** a named workflow, e.g. `beta`, `release`, `screenshots`.
+- **Action:** a built-in step — Fastlane ships 200+ (e.g. `gradle`, `gym`, `match`, `supply`, `pilot`, `slack`).
+- **Appfile / Matchfile / etc.:** config files for app identifiers, signing, credentials.
+The famous actions by nickname:
+| Action | Alias | What it does |
+|---|---|---|
+| `build_ios_app` | `gym` | Builds & archives the iOS app (IPA) |
+| `build_android_app` | `gradle` | Runs Gradle tasks, produces APK/AAB |
+| `sync_code_signing` | `match` | Manages iOS certificates & provisioning profiles in a shared encrypted repo |
+| `upload_to_play_store` | `supply` | Publishes AAB + metadata to Google Play |
+| `upload_to_testflight` | `pilot` | Uploads builds to TestFlight |
+| `capture_screenshots` | `snapshot` / `screengrab` | Automates store screenshots on many devices/locales |
+| `run_tests` | `scan` | Runs unit/UI test suites |
+### How does it work?
+You describe a workflow once in the **Fastfile**, then anyone (a developer locally, or Jenkins in CI) runs it with one command: `fastlane android beta`.
+```ruby
+# fastlane/Fastfile
+default_platform(:android)
+platform :android do
+  desc "Build a release AAB and ship it to internal testers"
+  lane :beta do
+    gradle(task: "clean")                       # 1. clean
+    gradle(                                     # 2. build + sign
+      task: "bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.signing.store.file" => ENV["KEYSTORE_PATH"],
+        "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
+      }
+    )
+    upload_to_play_store(track: "internal")     # 3. upload
+    slack(message: "New internal build is live 🎉")  # 4. notify
+  end
+  ```
+```mermaid
+flowchart LR
+    CMD["$ fastlane android beta"] --> L[Lane: beta]
+    subgraph "Fastlane executes actions in order"
+        S1["gradle clean"] --> S2["gradle bundleRelease<br/>+ inject signing config"]
+        S2 --> S3["upload_to_play_store<br/>(internal track)"]
+        S3 --> S4["slack notify"]
+    end
+    L --> S1
+    S4 --> OUT["Versioned AAB in Play Console<br/>+ team notified"]
+```
+For iOS, the flow it automates is even more painful manually — certificates, provisioning profiles, archiving, export options, App Store Connect uploads:
+```mermaid
+flowchart LR
+    subgraph "iOS release lane"
+        M["match<br/>(fetch signing certs<br/>from encrypted git repo)"] --> G["gym<br/>(archive + export IPA)"]
+        G --> P["pilot<br/>(upload to TestFlight)"]
+        P --> D["deliver<br/>(metadata, screenshots,<br/>App Store submission)"]
+    end
+```
+### Why use it?
+- **Kills manual release checklists:** a release that took a person 1–2 hours of clicking through Android Studio / Xcode / Play Console / App Store Connect becomes a single command.
+- **Removes human error:** signing configs, version bumps, changelogs, upload tracks — all codified. The #1 source of broken releases is a skipped manual step.
+- **Same command locally and in CI:** Jenkins runs the exact lane a developer would run on their laptop, so there's no divergence between "CI builds" and "local builds".
+- **Solves iOS code-signing hell:** `match` puts certificates/profiles in one encrypted repo shared by the whole team and CI, ending the "works on Priya's Mac but not the build machine" problem.
+- **Cross-platform in one tool:** one mental model for both Android and iOS release pipelines.
+**Trade-offs to know:** it's Ruby (dependency management via Bundler adds friction), and Apple/Google API changes occasionally break actions until the community patches them. But it remains the de-facto standard.
+---
+## 3. Maestro
+### What is it?
+Maestro is an **open-source mobile UI testing framework** (by mobile.dev). You write test *flows* in simple **YAML** — "launch the app, tap Login, type an email, assert the home screen is visible" — and Maestro executes them against a real running app on an emulator, simulator, or physical device. It supports Android, iOS, React Native, Flutter, and even Web views.
+It competes with / replaces tools like Espresso (Android), XCUITest (iOS), Appium, and Detox — but with a very different philosophy: **black-box, declarative, and tolerant of flakiness by design**.
+Key vocabulary:
+- **Flow:** a single YAML file describing one user journey (e.g. `login.yaml`).
+- **Commands:** steps inside a flow — `tapOn`, `inputText`, `assertVisible`, `scroll`, `swipe`, `runFlow` (compose flows).
+- **Maestro Studio:** an interactive tool that inspects your app's screen and helps you write selectors.
+- **Maestro Cloud:** optional paid service to run flows on hosted devices at scale.
+### How does it work?
+1. You start an emulator/simulator with your app installed (the APK Fastlane just built, for instance).
+2. Maestro connects to the device, launches the app, and reads the **view hierarchy** (accessibility tree) of the current screen.
+3. Each YAML command is matched against that hierarchy — by visible text, accessibility ID, or regex.
+4. **Built-in smart waiting:** Maestro automatically retries/waits for elements to appear and for the UI to settle, which eliminates most `sleep()`-style flakiness that plagues other frameworks.
+5. Results (pass/fail, screenshots, recordings, logs) are written out — perfect for a CI report.
+A real flow file:
+```yaml
+# .maestro/login.yaml
+appId: com.example.myapp
+---
+- launchApp:
+    clearState: true
+- tapOn: "Log in"
+- tapOn:
+    id: "email_input"
+- inputText: "test@example.com"
+- tapOn:
+    id: "password_input"
+- inputText: "s3cret!"
+- tapOn: "Continue"
+- assertVisible: "Welcome back"     # test passes only if home screen shows
+- takeScreenshot: login_success
+```
+Run it with: `maestro test .maestro/login.yaml` (or a whole folder: `maestro test .maestro/`).
+```mermaid
+sequenceDiagram
+    participant Y as Flow (YAML)
+    participant M as Maestro CLI
+    participant D as Device / Emulator
+    participant A as App under test
+    Y->>M: maestro test login.yaml
+    M->>D: connect (adb / iOS driver)
+    M->>A: launchApp (clear state)
+    loop for each command
+        M->>D: read view hierarchy
+        D-->>M: current screen elements
+        M->>M: find element (auto-retry / wait until settled)
+        M->>A: perform action (tap / type / swipe)
+        A-->>D: UI updates
+    end
+    M->>M: assertVisible "Welcome back"
+    M-->>Y: ✅ PASS + screenshots + logs
+```
+### Why use it?
+- **Tests what users actually experience:** unit tests prove your logic works; only UI tests prove the *app* works — that the button is visible, tappable, and leads somewhere.
+- **YAML = low barrier to entry:** QA engineers and even PMs can read and write flows. No Kotlin/Swift test APIs, no Appium driver setup, no waiting-strategy boilerplate.
+- **Anti-flakiness by design:** auto-waiting and retries are built in. Flaky UI tests are the #1 reason teams abandon UI testing; Maestro was built specifically to fix that.
+- **Black-box & cross-platform:** it doesn't need your app's source code or test hooks — it drives the binary. One tool and one syntax for Android *and* iOS.
+- **Fast iteration:** `maestro studio` lets you inspect the live screen and try commands interactively; flows are hot-reloaded during development.
+**Trade-offs to know:** UI tests are inherently slower than unit tests (seconds per step, need a device), and black-box testing can't easily assert internal state — keep the suite focused on critical user journeys (login, core purchase/apply flow, onboarding), not every edge case.
+---
+## How the Three Fit Together
+Each tool stays in its lane (pun intended). A typical end-to-end pipeline for a mobile release:
+```mermaid
+flowchart TB
+    P[Developer merges PR to main] --> W[Webhook fires]
+    subgraph JENKINS["🏭 Jenkins — orchestrates everything"]
+        direction TB
+        S0[Checkout code on Android agent]
+        S1["Static checks + unit tests<br/>(gradlew lint test)"]
+        S2["<b>Fastlane</b>: build & sign release APK/AAB"]
+        S3[Boot emulator]
+        S4["<b>Maestro</b>: run UI flows<br/>(login, core journeys, regression pack)"]
+        S5{All green?}
+        S6["<b>Fastlane</b>: upload to<br/>Play Store internal track / TestFlight"]
+        S7[Notify team on Slack<br/>+ archive artifacts & reports]
+        S0 --> S1 --> S2 --> S3 --> S4 --> S5
+        S5 -->|yes| S6 --> S7
+        S5 -->|no| S8[Fail the build<br/>+ attach Maestro screenshots/logs] --> S7
+    end
+    W --> S0
+```
+The division of responsibility, spelled out:
+| Question | Answered by |
+|---|---|
+| *When* should this run? (every push? nightly? on release tags?) | **Jenkins** (triggers) |
+| *Where* should it run? (which Mac/Linux machine, which emulator) | **Jenkins** (agents/labels) |
+| *How* is the app built, signed, versioned and uploaded? | **Fastlane** (lanes) |
+| *Does* the built app actually work for a user? | **Maestro** (flows) |
+| *Who* gets told about the result, and where do artifacts live? | **Jenkins** (post steps, notifications) |
+### Why not just one tool?
+Because they operate at different layers, and each is replaceable independently:
+- Swap **Jenkins** for GitHub Actions or Bitrise → your Fastfile and Maestro flows don't change at all.
+- Swap **Fastlane** for raw Gradle/Xcode scripts → Jenkins stages and Maestro flows are untouched.
+- Swap **Maestro** for Appium/Espresso → build and orchestration layers are untouched.
+That loose coupling — orchestrator, builder, tester as separate tools glued by shell commands — is the whole architectural point.
+---
+## TL;DR
+- **Jenkins** = self-hosted automation server. It watches your repo, and on every push/schedule, runs your pipeline on the right machine and reports results. *It runs things.*
+- **Fastlane** = mobile release automation. One command builds, signs, versions, and uploads your app, identically on a laptop or in CI. *It ships things.*
+- **Maestro** = declarative UI testing. YAML flows drive your real app on a device and assert the user experience works, with built-in anti-flakiness. *It verifies things.*
+- Together: Jenkins **triggers** → Fastlane **builds & ships** → Maestro **verifies** → Jenkins **reports**.
