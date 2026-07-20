@@ -560,3 +560,68 @@ That loose coupling — orchestrator, builder, tester as separate tools glued by
 - **Fastlane** = mobile release automation. One command builds, signs, versions, and uploads your app, identically on a laptop or in CI. *It ships things.*
 - **Maestro** = declarative UI testing. YAML flows drive your real app on a device and assert the user experience works, with built-in anti-flakiness. *It verifies things.*
 - Together: Jenkins **triggers** → Fastlane **builds & ships** → Maestro **verifies** → Jenkins **reports**.
+
+
+# A/B Testing
+
+## What it is
+
+A/B testing (also called split testing) is a method of comparing **two versions of something** — a screen, a button, a headline, a pricing page — by showing each version to a different, randomly-split group of real users, then measuring which one performs better against a specific goal.
+
+- **Version A** = the control (the current/existing version)
+- **Version B** = the variant (the new thing you want to test)
+
+Users are split randomly and simultaneously, so both groups experience the same conditions (same time period, same traffic sources, same overall context) — the *only* difference between them is the one thing you changed.
+
+## Why it exists
+
+Without A/B testing, product decisions rely on opinion, intuition, or "the loudest voice in the room." A/B testing replaces "I think this button color converts better" with **actual measured evidence** from real user behavior.
+
+## How it works, step by step
+
+1. **Pick a hypothesis** — a specific, testable belief.
+   > "Changing the 'Apply Now' button from blue to orange will increase applications."
+2. **Define a success metric** — the one number that decides the winner.
+   > e.g., click-through rate, sign-up rate, conversion rate, revenue per user
+3. **Split traffic randomly** — e.g., 50% of users see Version A, 50% see Version B, assigned randomly (often via a user ID hash so the same user always sees the same version).
+4. **Run the test for a fixed period** — long enough to gather statistically meaningful data (not just a few hours).
+5. **Measure results** — compare the success metric between the two groups.
+6. **Check statistical significance** — make sure the difference is real and not just random noise/chance.
+7. **Ship the winner** — roll out the better-performing version to 100% of users.
+
+## Example
+
+| | Version A (Control) | Version B (Variant) |
+|---|---|---|
+| Button color | Blue | Orange |
+| Users shown | 5,000 | 5,000 |
+| Clicked "Apply" | 400 (8%) | 550 (11%) |
+| Result | — | **Winner** — statistically significant lift |
+
+## Key concepts
+
+- **Control vs. Variant** — the baseline vs. the thing being tested
+- **Sample size** — how many users need to see each version before results are trustworthy (too small a sample = unreliable results)
+- **Statistical significance** — a measure of confidence that the observed difference is real, not random luck (commonly expressed as a p-value or confidence level, e.g., 95%)
+- **Conversion rate** — the percentage of users who complete the desired action
+- **Multivariate testing** — a related technique testing *multiple* changes at once (not just A vs. B), used when you want to test combinations of changes together
+
+## Common use cases
+
+- UI/UX changes (button color, layout, copy)
+- Pricing pages
+- Onboarding flows
+- Email subject lines
+- App store listing screenshots
+- Notification wording/timing
+
+## Common pitfalls
+
+- **Stopping too early** — ending the test before enough data is collected, leading to false conclusions
+- **Testing too many things at once** — makes it unclear which specific change caused the result
+- **Ignoring external factors** — holidays, marketing campaigns, or seasonality can skew results if not accounted for
+- **Not defining success metrics upfront** — deciding what "winning" means *after* seeing the data is a bias trap (this is sometimes called "p-hacking")
+
+## One-line summary
+
+A/B testing is a controlled experiment that lets data — not opinion — decide which version of a product actually performs better with real users.
