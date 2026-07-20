@@ -2097,3 +2097,124 @@ com.example.app
 - Not mapping between DTOs, Entities, and UI models — leaking network/database models all the way up to the UI.
 
 
+# Ktlint
+
+## What it is
+
+**Ktlint** is a static analysis and formatting tool for **Kotlin** code. It checks `.kt` files against a defined style guide (indentation, spacing, import order, line length, etc.) and can either:
+- **report** violations (fail the build), or
+- **auto-fix** them for you.
+
+It's built on top of Kotlin's own compiler parser (PSI), so it understands real Kotlin syntax — not just plain text/regex matching.
+
+## Why we use it
+
+| Problem without ktlint | What ktlint fixes |
+|---|---|
+| Code reviews full of "add a space here", "fix this import order" comments | Formatting is enforced automatically — reviewers focus on logic, not style |
+| Every dev's IDE has different default formatting | Whole codebase looks consistently written, regardless of author |
+| Style issues discovered late (or never) | Catches issues fast, in seconds, ideal for CI |
+
+## The two main commands
+
+```bash
+./gradlew ktlintCheck   # scans code, FAILS build if violations found (used in CI)
+./gradlew ktlintFormat  # scans code, AUTO-FIXES violations in place (used locally)
+```
+
+- `ktlintCheck` → read-only, just reports problems. This is the one wired into CI pipelines — like a failing test, it blocks the build/PR.
+- `ktlintFormat` → rewrites your files to fix what it can. Run this locally *before* committing, so `ktlintCheck` doesn't fail later.
+
+## Example: before and after `ktlintFormat`
+
+**Before (violates several rules):**
+```kotlin
+import com.example.*
+import com.example.models.User
+
+
+class UserRepo{
+    fun getUser(id:Int):User{
+        val name="John"
+        return User(id,name)
+    }
+}
+```
+
+Problems ktlint would flag here:
+- Wildcard import (`import com.example.*`)
+- Extra blank line between imports
+- Missing space after `class UserRepo` before `{`
+- Missing spaces around `:` and `=`
+- Missing space after `,` in function params
+
+**After `ktlintFormat` (auto-fixed):**
+```kotlin
+import com.example.models.User
+
+class UserRepo {
+    fun getUser(id: Int): User {
+        val name = "John"
+        return User(id, name)
+    }
+}
+```
+
+## Example CI output from `ktlintCheck`
+
+If you run `ktlintCheck` on the "before" code above, it won't rewrite anything — it just reports and fails:
+
+```
+> Task :app:ktlintMainSourceSetCheck FAILED
+
+UserRepo.kt:1:1: Wildcard import (cannot be auto-corrected)
+UserRepo.kt:3:1: Unnecessary blank line(s)
+UserRepo.kt:5:16: Missing spacing before "{"
+UserRepo.kt:6:18: Missing spacing around ":"
+
+BUILD FAILED
+```
+
+This is exactly why it's placed **early** in a CI pipeline — it's fast (no compiling needed) and catches trivial issues before wasting time on slower steps like unit tests or UI tests.
+
+## Where it fits in a typical Android CI pipeline
+
+```
+Checkout code
+     ↓
+ktlintCheck        ← fast, fails in seconds on style issues
+     ↓
+Unit tests
+     ↓
+Build APK
+     ↓
+E2E tests (e.g. Maestro)  ← slow, usually only at PR/release gates
+```
+
+## Setting it up (Gradle plugin)
+
+```kotlin
+// build.gradle.kts
+plugins {
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
+}
+```
+
+Adding this plugin automatically registers the `ktlintCheck` and `ktlintFormat` tasks shown above.
+
+## Customizing rules
+
+Teams often tweak the default rules via an `.editorconfig` file at the project root:
+
+```ini
+[*.{kt,kts}]
+indent_size = 4
+max_line_length = 120
+insert_final_newline = true
+disabled_rules = no-wildcard-imports
+```
+
+## One-line summary
+
+Ktlint automatically enforces consistent Kotlin code style across a whole team, catching formatting issues in seconds so code review time is spent on actual logic instead of spacing and import order.
+
