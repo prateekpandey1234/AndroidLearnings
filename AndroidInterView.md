@@ -2218,3 +2218,196 @@ disabled_rules = no-wildcard-imports
 
 Ktlint automatically enforces consistent Kotlin code style across a whole team, catching formatting issues in seconds so code review time is spent on actual logic instead of spacing and import order.
 
+# Gradle Tasks
+
+## What a Gradle task is
+
+Gradle is the build system used by Android (and most JVM/Kotlin) projects. A **task** is a single named, runnable unit of work in that build system — "compile this," "run these tests," "copy these files," "check formatting," etc.
+
+Every task has:
+- **Inputs** — files/values it reads (source code, config, other files)
+- **Actions** — what it actually does when it runs
+- **Outputs** — files/results it produces
+
+You already use tasks constantly without necessarily calling them that:
+
+```bash
+./gradlew assembleDebug   # a task: builds a debug APK
+./gradlew test            # a task: runs unit tests
+./gradlew ktlintCheck     # a task: checks code style (see ktlint.md)
+```
+
+`./gradlew <taskName>` is just "run this task."
+
+## Tasks form a dependency graph
+
+Tasks aren't isolated — Gradle builds a graph of which tasks depend on which other tasks. Running one task automatically triggers everything upstream it needs first.
+
+```
+assembleDebug
+    ↑ depends on
+compileDebugKotlin
+    ↑ depends on
+generateDebugSources
+```
+
+So running `./gradlew assembleDebug` doesn't just build the APK — Gradle first figures out and runs `compileDebugKotlin`, which needs `generateDebugSources`, etc., in the correct order automatically.
+
+## Incremental builds — "UP-TO-DATE"
+
+Gradle tracks each task's inputs/outputs. If nothing has changed since the last run, Gradle **skips** re-running that task and just marks it:
+
+```
+> Task :app:compileDebugKotlin UP-TO-DATE
+```
+
+This is why repeated builds are often much faster than the first one — Gradle isn't redoing work it already knows is still valid.
+
+## Where do tasks come from?
+
+Three sources:
+1. **Built into Gradle itself** — e.g., `clean`, `build`
+2. **Added by a plugin you apply** — e.g., the Android Gradle Plugin adds `assembleDebug`, `assembleRelease`; the ktlint plugin adds `ktlintCheck`/`ktlintFormat`
+3. **Custom tasks you write yourself** — this is where `.create()` / `.register()` come in
+
+## Writing your own task: `.create()` vs `.register()`
+
+This is the part that trips people up. Both add a new task to the project — but they differ in **when** the task object actually gets built.
+
+### `tasks.create(...)` — eager
+
+```kotlin
+tasks.create("printHello") {
+    doLast {
+        println("Hello from a Gradle task!")
+    }
+}
+```
+
+`create()` configures and instantiates the task **immediately**, while Gradle is still evaluating the build script — even if you never actually run that task in this build invocation. If you have dozens of tasks defined with `create()`, all of them get built in memory every single time, whether you need them or not. This makes builds slower than they need to be, especially in large projects.
+
+### `tasks.register(...)` — lazy (the modern, recommended way)
+
+```kotlin
+tasks.register("printHello") {
+    doLast {
+        println("Hello from a Gradle task!")
+    }
+}
+```
+
+`register()` only creates a **placeholder/promise** for the task. The actual task object isn't built unless/until something actually needs it — e.g., you run `./gradlew printHello` directly, or another task depends on it. If you never invoke it in a given build, Gradle never pays the cost of instantiating it at all.
+
+**Rule of thumb: always prefer `register()` over `create()`** unless you have a specific reason not to (e.g., some older plugin API forces eager creation). Gradle's own documentation recommends `register()` as the default for exactly this performance reason.
+
+### Side-by-side
+
+| | `.create()` | `.register()` |
+|---|---|---|
+| When the task is built | Immediately, during configuration | Lazily, only if actually needed |
+| Performance | Slower for large builds | Faster — avoids unnecessary work |
+| Recommended today? | ❌ Legacy | ✅ Yes, default choice |
+
+## A more realistic custom task example
+
+Tying back to an earlier topic — a custom task that runs SVGO (SVG Optimizer) over a folder of images:
+
+```kotlin
+tasks.register<Exec>("svgOptimize") {
+    description = "Optimizes SVG assets before resource merging"
+    commandLine("npx", "svgo", "-f", "src/main/res/raw-svg", "-o", "src/main/res/drawable")
+}
+```
+
+Breaking this down:
+- `register<Exec>(...)` — registers a task of type `Exec` (a built-in Gradle task type for running external shell commands), lazily.
+- `commandLine(...)` — the actual action: run the `svgo` CLI tool over a folder.
+- `description = "..."` — shows up when running `./gradlew tasks` so other devs know what it does.
+
+You could then wire this into the pipeline so it runs automatically before another task, e.g. before resource merging:
+
+```kotlin
+tasks.named("preBuild") {
+    dependsOn("svgOptimize")
+}
+```
+
+This says: "before `preBuild` runs, make sure `svgOptimize` has run first."
+
+## Declaring task dependencies
+
+Two common ways to link tasks together:
+
+```kotlin
+// Option 1: inline while registering
+tasks.register("packageApp") {
+    dependsOn("compileDebugKotlin", "svgOptimize")
+    doLast {
+        println("Packaging app...")
+    }
+}
+
+// Option 2: attach dependency to an existing task afterward
+tasks.named("assembleDebug") {
+    dependsOn("ktlintCheck")
+}
+```
+
+## `doFirst` / `doLast` — adding actions to a task
+
+```kotlin
+tasks.register("greet") {
+    doFirst {
+        println("About to greet...")
+    }
+    doLast {
+        println("Hello!")
+    }
+}
+```
+
+- `doFirst { }` — runs at the **start** of the task's execution
+- `doLast { }` — runs at the **end** of the task's execution
+
+You can attach multiple `doFirst`/`doLast` blocks to the same task, and they run in the order they're added.
+
+## Common built-in task types you'll see
+
+| Task type | What it does |
+|---|---|
+| `Exec` | Runs an external command/process |
+| `Copy` | Copies files from one location to another |
+| `Delete` | Deletes files/directories |
+| `Test` | Runs test suites |
+| `Zip` | Packages files into a zip archive |
+
+Example using `Copy`:
+```kotlin
+tasks.register<Copy>("copyLicense") {
+    from("LICENSE.txt")
+    into("build/resources")
+}
+```
+
+## Full mini example: a real pipeline stage
+
+Putting several pieces from this doc together — a custom task that only runs if source files changed, wired into the existing build:
+
+```kotlin
+tasks.register<Exec>("svgOptimize") {
+    description = "Optimizes SVG assets"
+    inputs.dir("src/main/res/raw-svg")
+    outputs.dir("src/main/res/drawable")
+    commandLine("npx", "svgo", "-f", "src/main/res/raw-svg", "-o", "src/main/res/drawable")
+}
+
+tasks.named("preBuild") {
+    dependsOn("svgOptimize")
+}
+```
+
+Adding `inputs.dir(...)` and `outputs.dir(...)` lets Gradle track whether the SVG source files actually changed — if they haven't, this task shows `UP-TO-DATE` and gets skipped on the next build, just like any built-in task.
+
+## One-line summary
+
+A Gradle task is a named, reusable unit of build work with defined inputs/outputs; `register()` is the modern, lazy, performance-friendly way to define custom ones (build the task only if actually needed), while `create()` is the older eager approach that should generally be avoided in new code.
