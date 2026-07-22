@@ -625,3 +625,56 @@ Without A/B testing, product decisions rely on opinion, intuition, or "the loude
 ## One-line summary
 
 A/B testing is a controlled experiment that lets data — not opinion — decide which version of a product actually performs better with real users.
+
+
+# devctl
+
+## Important caveat first
+
+`devctl` is **not one specific, universal tool** — unlike `gradlew`, `adb`, or `kubectl`, there's no single canonical `devctl` maintained by one organization. It's a **naming convention** ("dev" + "ctl", short for "developer control/controller") that many different companies and open-source projects independently reuse for their own internal developer-facing CLI. If you've encountered a `devctl` somewhere (a company's internal tooling, a repo's README, a script in a codebase), it's almost certainly **that specific team's own custom tool** — worth checking your project's own docs/README rather than assuming it matches a public one.
+
+## Why the name pattern exists
+
+The `xctl` naming style itself comes from Unix convention — "control" a thing, e.g. `systemctl` (control system services), `kubectl` (control a Kubernetes cluster). `devctl` follows that same pattern: **"control your dev environment/workflow from one CLI."**
+
+## What `devctl`-style tools commonly do, across real examples
+
+Even though there's no single tool, most `devctl` implementations converge on the same underlying problem: **"there are 5-10 different manual steps/commands a developer has to remember to set up, run, or manage their environment — wrap them all behind one consistent command."** Common capabilities seen across different real-world `devctl` tools:
+
+| Capability | Example commands |
+|---|---|
+| Spin up / tear down a dev environment | `devctl dev-up`, `devctl dev-down` |
+| Bootstrap a new project/repo from a template | `devctl app bootstrap --name my-app` |
+| Manage cloud dev machines (start/stop/snapshot) | `devctl snapshot`, `devctl logs` |
+| Generate boilerplate/config files (CI workflows, changelogs) | `devctl gen workflows` |
+| Self-service access to internal infra (Vault, K8s, ArgoCD) with permission control | role-based CLI commands, approval workflows |
+| Track/estimate cost of cloud resources devs spin up | `devctl do-bill` |
+| Update itself / show version | `devctl update`, `devctl --version` |
+
+## Why teams build one at all
+
+Same underlying motivation as everything we've covered in Gradle/CI — **remove manual steps a human has to remember**, replacing them with one consistent entry point:
+
+- **Consistency across the team** — instead of every developer having their own personal shell aliases/scripts for "set up my dev environment," everyone runs the same `devctl` command and gets the same result, on Windows, macOS, or Linux.
+- **Reduces onboarding friction** — a new developer doesn't need to read a 10-step wiki page to get a working environment; `devctl dev-up` (or equivalent) does it.
+- **Cross-platform consistency** — several real-world `devctl` tools explicitly route everything through a single core (e.g., a Python core with thin wrappers per shell) specifically so behavior doesn't differ between CMD, PowerShell, Bash, and Git Bash.
+- **Cost/resource control** — cloud-dev-environment flavors of `devctl` often exist specifically to stop developers from leaving expensive cloud VMs running all day, by making stopping them as easy as one command.
+- **Guardrails with permissions (RBAC)** — some `devctl` variants exist specifically to give developers **self-service** access to sensitive infrastructure (secrets vaults, Kubernetes, deployment tools) without just handing out raw credentials — access is routed through the CLI with role checks and audit logging.
+
+## Example: a plausible internal `devctl` for an Android team
+
+If your own team/company has a `devctl`, it likely wraps things you'd otherwise type manually — tying back to concepts from this conversation:
+
+```bash
+devctl setup          # installs JDK, Android SDK, sets up local.properties
+devctl emulator start # boots a configured emulator (used for Maestro tests, etc.)
+devctl build debug    # wraps ./gradlew assembleDebug with any extra env setup
+devctl test e2e       # wraps the maestroTest Gradle task from earlier
+devctl secrets pull   # fetches dev API keys from a vault instead of hardcoding them
+```
+
+None of these commands are "special" — each one is very likely just a thin wrapper shelling out to tools you already know (`./gradlew`, `adb`, `maestro`, a secrets manager CLI) — the value of `devctl` is bundling and standardizing them, not doing anything a single command couldn't already do on its own.
+
+## The one-line summary
+
+`devctl` is a naming pattern, not a specific product — it almost always means **"a custom, team-specific CLI wrapper that bundles together the repetitive setup/build/deploy commands a developer would otherwise have to remember and run manually."** If you've come across one at work, the right move is to read that specific tool's own `--help` output or internal docs, since it's very unlikely to match any public tool by the same name.
