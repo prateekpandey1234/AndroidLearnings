@@ -1,20 +1,6 @@
 # GitHub Actions & Workflows — What, Why, and How
 > This document explains GitHub Actions from the ground up, using **this repository's own workflow** — [`.github/workflows/maestro-test-suit.yml`](../.github/workflows/maestro-test-suit.yml) — as the running example. That workflow builds the WorkIndia Android app and runs Maestro end-to-end (E2E) tests on an Android emulator.
----
-## Table of Contents
-1. [What is GitHub Actions?](#1-what-is-github-actions)
-2. [Why do we use it?](#2-why-do-we-use-it)
-3. [The building blocks (concepts & vocabulary)](#3-the-building-blocks-concepts--vocabulary)
-4. [How a workflow runs — the big picture](#4-how-a-workflow-runs--the-big-picture)
-5. [Our workflow, dissected line by line](#5-our-workflow-dissected-line-by-line)
-6. [The full journey of our Maestro workflow (diagram)](#6-the-full-journey-of-our-maestro-workflow)
-7. [Expressions, contexts, and variables](#7-expressions-contexts-and-variables)
-8. [Caching — why our builds are fast](#8-caching--why-our-builds-are-fast)
-9. [Artifacts — getting results out](#9-artifacts--getting-results-out)
-10. [Triggers you could add next](#10-triggers-you-could-add-next)
-11. [GitHub Actions vs. our Jenkins pipelines](#11-github-actions-vs-our-jenkins-pipelines)
-12. [Cheat sheet](#12-cheat-sheet)
----
+
 ## 1. What is GitHub Actions?
 **GitHub Actions is GitHub's built-in CI/CD (Continuous Integration / Continuous Delivery) platform.** It lets you run automated tasks — building code, running tests, releasing apps — directly from your repository, triggered by events that happen on GitHub (a push, a pull request, a button click, a schedule, …).
 Everything is described in **YAML files** that live inside the repository under:
@@ -291,10 +277,9 @@ jobs:
 **Official docs:** [docs.github.com/actions](https://docs.github.com/en/actions) · Workflow syntax reference: [docs.github.com/actions/reference/workflow-syntax-for-github-actions](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions)
 
 
-# Jenkins, Fastlane & Maestro — What, How and Why
+## 13. Jenkins, Fastlane & Maestro — What, How and Why
 A tool-by-tool guide to the three pillars of a modern mobile CI/CD + testing setup. Each section answers three questions: **What is it? How does it work? Why do we need it?**
 ---
-## The 30-Second Overview
 These three tools solve three different problems, and they compose into one pipeline:
 | Tool | Category | Problem it solves | One-liner |
 |---|---|---|---|
@@ -312,8 +297,8 @@ flowchart LR
 ```
 > **Mental model:** Jenkins is the *factory manager*, Fastlane is the *assembly line*, Maestro is the *quality inspector*.
 ---
-## 1. Jenkins
-### What is it?
+### 1. Jenkins
+#### What is it?
 Jenkins is an **open-source automation server** written in Java. It's one of the oldest and most widely used CI/CD (Continuous Integration / Continuous Delivery) tools. You host it yourself (on a VM, bare metal, or Kubernetes), and it runs "jobs" — arbitrary sequences of steps like *checkout code → build → test → deploy*.
 Key vocabulary:
 - **Controller (master):** the brain — serves the web UI, schedules jobs, stores config.
@@ -321,7 +306,7 @@ Key vocabulary:
 - **Job / Pipeline:** a defined unit of automation.
 - **Jenkinsfile:** a text file (Groovy DSL) checked into your repo that describes the pipeline as code.
 - **Plugin:** Jenkins's superpower and curse — 1,800+ plugins integrate it with Git, Slack, Docker, Android SDK, everything.
-### How does it work?
+#### How does it work?
 1. **A trigger fires** — a push/PR webhook from GitHub/GitLab, a cron schedule (nightly build), another job finishing, or a human clicking "Build Now".
 2. **The controller schedules the job** onto an agent that has the right labels (e.g. `android`, `mac-mini-ios`).
 3. **The agent executes the pipeline stages** defined in the Jenkinsfile — each stage is a shell command, a script, or a plugin step.
@@ -383,7 +368,7 @@ pipeline {
     }
 }
 ```
-### Why use it?
+#### Why use it?
 - **Automation of repetition:** no human should run builds/tests by hand on every commit. Machines don't forget steps.
 - **Fast feedback:** a broken commit is flagged in minutes, not discovered days later by a teammate.
 - **Single source of truth:** every build is reproducible, logged, numbered and auditable. "It works on my machine" dies here.
@@ -391,8 +376,8 @@ pipeline {
 - **Infinitely extensible:** plugins + arbitrary shell steps mean it can orchestrate *anything* — which is exactly why it's the layer that calls Fastlane and Maestro rather than replacing them.
 **Trade-offs to know:** you maintain it yourself (upgrades, plugins, agent machines), the UI is dated, and Groovy pipelines have a learning curve. Cloud alternatives (GitHub Actions, GitLab CI, Bitrise, CircleCI) trade control for convenience.
 ---
-## 2. Fastlane
-### What is it?
+### 2. Fastlane
+#### What is it?
 Fastlane is an **open-source build & release automation toolchain for mobile apps** (Android and iOS), written in Ruby and now maintained under the Mobile Native Foundation. It packages the dozens of fiddly steps between "code compiles" and "app is in users' hands" into scriptable, repeatable commands called **lanes**.
 Key vocabulary:
 - **Fastfile:** the Ruby file where you define your lanes (lives in `fastlane/` in your repo).
@@ -409,7 +394,7 @@ The famous actions by nickname:
 | `upload_to_testflight` | `pilot` | Uploads builds to TestFlight |
 | `capture_screenshots` | `snapshot` / `screengrab` | Automates store screenshots on many devices/locales |
 | `run_tests` | `scan` | Runs unit/UI test suites |
-### How does it work?
+#### How does it work?
 You describe a workflow once in the **Fastfile**, then anyone (a developer locally, or Jenkins in CI) runs it with one command: `fastlane android beta`.
 ```ruby
 # fastlane/Fastfile
@@ -450,7 +435,7 @@ flowchart LR
         P --> D["deliver<br/>(metadata, screenshots,<br/>App Store submission)"]
     end
 ```
-### Why use it?
+#### Why use it?
 - **Kills manual release checklists:** a release that took a person 1–2 hours of clicking through Android Studio / Xcode / Play Console / App Store Connect becomes a single command.
 - **Removes human error:** signing configs, version bumps, changelogs, upload tracks — all codified. The #1 source of broken releases is a skipped manual step.
 - **Same command locally and in CI:** Jenkins runs the exact lane a developer would run on their laptop, so there's no divergence between "CI builds" and "local builds".
@@ -458,8 +443,8 @@ flowchart LR
 - **Cross-platform in one tool:** one mental model for both Android and iOS release pipelines.
 **Trade-offs to know:** it's Ruby (dependency management via Bundler adds friction), and Apple/Google API changes occasionally break actions until the community patches them. But it remains the de-facto standard.
 ---
-## 3. Maestro
-### What is it?
+### 3. Maestro
+#### What is it?
 Maestro is an **open-source mobile UI testing framework** (by mobile.dev). You write test *flows* in simple **YAML** — "launch the app, tap Login, type an email, assert the home screen is visible" — and Maestro executes them against a real running app on an emulator, simulator, or physical device. It supports Android, iOS, React Native, Flutter, and even Web views.
 It competes with / replaces tools like Espresso (Android), XCUITest (iOS), Appium, and Detox — but with a very different philosophy: **black-box, declarative, and tolerant of flakiness by design**.
 Key vocabulary:
@@ -467,7 +452,7 @@ Key vocabulary:
 - **Commands:** steps inside a flow — `tapOn`, `inputText`, `assertVisible`, `scroll`, `swipe`, `runFlow` (compose flows).
 - **Maestro Studio:** an interactive tool that inspects your app's screen and helps you write selectors.
 - **Maestro Cloud:** optional paid service to run flows on hosted devices at scale.
-### How does it work?
+#### How does it work?
 1. You start an emulator/simulator with your app installed (the APK Fastlane just built, for instance).
 2. Maestro connects to the device, launches the app, and reads the **view hierarchy** (accessibility tree) of the current screen.
 3. Each YAML command is matched against that hierarchy — by visible text, accessibility ID, or regex.
@@ -511,7 +496,7 @@ sequenceDiagram
     M->>M: assertVisible "Welcome back"
     M-->>Y: ✅ PASS + screenshots + logs
 ```
-### Why use it?
+#### Why use it?
 - **Tests what users actually experience:** unit tests prove your logic works; only UI tests prove the *app* works — that the button is visible, tappable, and leads somewhere.
 - **YAML = low barrier to entry:** QA engineers and even PMs can read and write flows. No Kotlin/Swift test APIs, no Appium driver setup, no waiting-strategy boilerplate.
 - **Anti-flakiness by design:** auto-waiting and retries are built in. Flaky UI tests are the #1 reason teams abandon UI testing; Maestro was built specifically to fix that.
@@ -519,7 +504,7 @@ sequenceDiagram
 - **Fast iteration:** `maestro studio` lets you inspect the live screen and try commands interactively; flows are hot-reloaded during development.
 **Trade-offs to know:** UI tests are inherently slower than unit tests (seconds per step, need a device), and black-box testing can't easily assert internal state — keep the suite focused on critical user journeys (login, core purchase/apply flow, onboarding), not every edge case.
 ---
-## How the Three Fit Together
+#### How the Three Fit Together
 Each tool stays in its lane (pun intended). A typical end-to-end pipeline for a mobile release:
 ```mermaid
 flowchart TB
@@ -548,7 +533,7 @@ The division of responsibility, spelled out:
 | *How* is the app built, signed, versioned and uploaded? | **Fastlane** (lanes) |
 | *Does* the built app actually work for a user? | **Maestro** (flows) |
 | *Who* gets told about the result, and where do artifacts live? | **Jenkins** (post steps, notifications) |
-### Why not just one tool?
+#### Why not just one tool?
 Because they operate at different layers, and each is replaceable independently:
 - Swap **Jenkins** for GitHub Actions or Bitrise → your Fastfile and Maestro flows don't change at all.
 - Swap **Fastlane** for raw Gradle/Xcode scripts → Jenkins stages and Maestro flows are untouched.
@@ -562,9 +547,9 @@ That loose coupling — orchestrator, builder, tester as separate tools glued by
 - Together: Jenkins **triggers** → Fastlane **builds & ships** → Maestro **verifies** → Jenkins **reports**.
 
 
-# A/B Testing
+## 14. A/B Testing
 
-## What it is
+### What it is
 
 A/B testing (also called split testing) is a method of comparing **two versions of something** — a screen, a button, a headline, a pricing page — by showing each version to a different, randomly-split group of real users, then measuring which one performs better against a specific goal.
 
@@ -573,11 +558,11 @@ A/B testing (also called split testing) is a method of comparing **two versions 
 
 Users are split randomly and simultaneously, so both groups experience the same conditions (same time period, same traffic sources, same overall context) — the *only* difference between them is the one thing you changed.
 
-## Why it exists
+### Why it exists
 
 Without A/B testing, product decisions rely on opinion, intuition, or "the loudest voice in the room." A/B testing replaces "I think this button color converts better" with **actual measured evidence** from real user behavior.
 
-## How it works, step by step
+### How it works, step by step
 
 1. **Pick a hypothesis** — a specific, testable belief.
    > "Changing the 'Apply Now' button from blue to orange will increase applications."
@@ -589,7 +574,7 @@ Without A/B testing, product decisions rely on opinion, intuition, or "the loude
 6. **Check statistical significance** — make sure the difference is real and not just random noise/chance.
 7. **Ship the winner** — roll out the better-performing version to 100% of users.
 
-## Example
+### Example
 
 | | Version A (Control) | Version B (Variant) |
 |---|---|---|
@@ -598,7 +583,7 @@ Without A/B testing, product decisions rely on opinion, intuition, or "the loude
 | Clicked "Apply" | 400 (8%) | 550 (11%) |
 | Result | — | **Winner** — statistically significant lift |
 
-## Key concepts
+### Key concepts
 
 - **Control vs. Variant** — the baseline vs. the thing being tested
 - **Sample size** — how many users need to see each version before results are trustworthy (too small a sample = unreliable results)
@@ -606,7 +591,7 @@ Without A/B testing, product decisions rely on opinion, intuition, or "the loude
 - **Conversion rate** — the percentage of users who complete the desired action
 - **Multivariate testing** — a related technique testing *multiple* changes at once (not just A vs. B), used when you want to test combinations of changes together
 
-## Common use cases
+### Common use cases
 
 - UI/UX changes (button color, layout, copy)
 - Pricing pages
@@ -615,29 +600,26 @@ Without A/B testing, product decisions rely on opinion, intuition, or "the loude
 - App store listing screenshots
 - Notification wording/timing
 
-## Common pitfalls
+### Common pitfalls
 
 - **Stopping too early** — ending the test before enough data is collected, leading to false conclusions
 - **Testing too many things at once** — makes it unclear which specific change caused the result
 - **Ignoring external factors** — holidays, marketing campaigns, or seasonality can skew results if not accounted for
 - **Not defining success metrics upfront** — deciding what "winning" means *after* seeing the data is a bias trap (this is sometimes called "p-hacking")
 
-## One-line summary
-
-A/B testing is a controlled experiment that lets data — not opinion — decide which version of a product actually performs better with real users.
 
 
-# devctl
+## 15. devctl
 
-## Important caveat first
+### Important caveat first
 
 `devctl` is **not one specific, universal tool** — unlike `gradlew`, `adb`, or `kubectl`, there's no single canonical `devctl` maintained by one organization. It's a **naming convention** ("dev" + "ctl", short for "developer control/controller") that many different companies and open-source projects independently reuse for their own internal developer-facing CLI. If you've encountered a `devctl` somewhere (a company's internal tooling, a repo's README, a script in a codebase), it's almost certainly **that specific team's own custom tool** — worth checking your project's own docs/README rather than assuming it matches a public one.
 
-## Why the name pattern exists
+### Why the name pattern exists
 
 The `xctl` naming style itself comes from Unix convention — "control" a thing, e.g. `systemctl` (control system services), `kubectl` (control a Kubernetes cluster). `devctl` follows that same pattern: **"control your dev environment/workflow from one CLI."**
 
-## What `devctl`-style tools commonly do, across real examples
+### What `devctl`-style tools commonly do, across real examples
 
 Even though there's no single tool, most `devctl` implementations converge on the same underlying problem: **"there are 5-10 different manual steps/commands a developer has to remember to set up, run, or manage their environment — wrap them all behind one consistent command."** Common capabilities seen across different real-world `devctl` tools:
 
@@ -651,7 +633,7 @@ Even though there's no single tool, most `devctl` implementations converge on th
 | Track/estimate cost of cloud resources devs spin up | `devctl do-bill` |
 | Update itself / show version | `devctl update`, `devctl --version` |
 
-## Why teams build one at all
+### Why teams build one at all
 
 Same underlying motivation as everything we've covered in Gradle/CI — **remove manual steps a human has to remember**, replacing them with one consistent entry point:
 
@@ -661,7 +643,7 @@ Same underlying motivation as everything we've covered in Gradle/CI — **remove
 - **Cost/resource control** — cloud-dev-environment flavors of `devctl` often exist specifically to stop developers from leaving expensive cloud VMs running all day, by making stopping them as easy as one command.
 - **Guardrails with permissions (RBAC)** — some `devctl` variants exist specifically to give developers **self-service** access to sensitive infrastructure (secrets vaults, Kubernetes, deployment tools) without just handing out raw credentials — access is routed through the CLI with role checks and audit logging.
 
-## Example: a plausible internal `devctl` for an Android team
+### Example: a plausible internal `devctl` for an Android team
 
 If your own team/company has a `devctl`, it likely wraps things you'd otherwise type manually — tying back to concepts from this conversation:
 
@@ -675,6 +657,112 @@ devctl secrets pull   # fetches dev API keys from a vault instead of hardcoding 
 
 None of these commands are "special" — each one is very likely just a thin wrapper shelling out to tools you already know (`./gradlew`, `adb`, `maestro`, a secrets manager CLI) — the value of `devctl` is bundling and standardizing them, not doing anything a single command couldn't already do on its own.
 
-## The one-line summary
+### The one-line summary
 
 `devctl` is a naming pattern, not a specific product — it almost always means **"a custom, team-specific CLI wrapper that bundles together the repetitive setup/build/deploy commands a developer would otherwise have to remember and run manually."** If you've come across one at work, the right move is to read that specific tool's own `--help` output or internal docs, since it's very unlikely to match any public tool by the same name.
+
+
+
+## 16. Docker & Jenkins: A Practical Primer
+
+### What is Docker?
+
+Docker is a tool for packaging an application together with **everything it needs to run** — the code, the runtime, system libraries, environment variables, config files — into a single, portable unit called a **container**.
+
+The core idea it solves is the classic problem: *"it works on my machine, but not in CI."* This usually happens because your laptop has a slightly different OS version, a different JDK, different installed tools, or different environment variables than the CI server. Docker eliminates that mismatch by shipping the *exact* environment along with the app, so it behaves identically no matter where it runs — your laptop, a teammate's laptop, or a Jenkins agent.
+
+### Containers vs. Virtual Machines
+
+A common point of confusion: containers are **not** the same as virtual machines.
+
+| | Virtual Machine | Container |
+|---|---|---|
+| What it virtualizes | Entire hardware + OS kernel | Just the application layer |
+| Boot time | Minutes | Seconds |
+| Size | GBs (full OS included) | MBs–a few hundred MBs |
+| Isolation | Strong (separate kernel) | Process-level (shares host kernel) |
+
+A VM runs a full guest operating system on top of virtualized hardware. A container shares the host machine's OS kernel and just isolates the *application's* filesystem, processes, and network — which is why containers start almost instantly and are far lighter weight than VMs.
+
+## What is a Docker Image?
+
+An **image** is the blueprint. A **container** is a running instance of that blueprint.
+
+Think of it like a class vs. an object in programming:
+- The **image** is like a class definition — it describes what should exist (which files, which tools, which base OS, which environment variables).
+- The **container** is like an instantiated object — a live, running process based on that image.
+
+You can spin up multiple containers from the same image, just like you can create multiple objects from the same class. Each container gets its own isolated filesystem and process space, but they all start from the same underlying image.
+
+### Where do images come from?
+
+Images are typically defined by a `Dockerfile` — a plain-text recipe listing the steps to build the image (e.g. "start from this base OS, install these packages, copy in this code, set this entry command"). Once built, an image can be:
+- Stored locally on a machine
+- Pushed to a **registry** (like Docker Hub, or a private registry such as AWS ECR) so other machines can pull and run it
+
+This is exactly what you see in a typical CI build script:
+
+```bash
+docker pull 867657578464.dkr.ecr.us-east-1.amazonaws.com/utility/android-fastlane-builder:latest
+docker run --rm -v $dir:/src <image-name> /bin/bash -c "cd /src && bundle exec fastlane android prod"
+```
+
+Here, `android-fastlane-builder:latest` is the **image** name (pulled from a private ECR registry), and `docker run` creates and starts a **container** from that image to actually execute the build commands.
+
+## Why does Jenkins need Docker?
+
+Jenkins itself is just an automation/orchestration tool — it doesn't inherently know how to build an Android app, run Ruby's Fastlane, or manage specific SDK/JDK versions. Without Docker, you'd have to manually install and maintain the *exact* correct versions of every tool (JDK, Android SDK, Ruby, Bundler, Fastlane, build-tools, etc.) directly on the Jenkins agent machine itself.
+
+That approach causes real problems:
+
+1. **Environment drift** — over time, the Jenkins agent's installed tool versions can silently change (OS updates, manual `apt install`s, plugin upgrades), causing builds to behave differently than before, seemingly "for no reason."
+2. **Version conflicts** — if you have multiple projects on the same Jenkins agent needing *different* JDK or Ruby versions, installing them all directly on the host gets messy and conflict-prone fast.
+3. **Hard to reproduce locally** — if a build fails on Jenkins, it's difficult for a developer to reproduce the *exact* same environment on their own laptop to debug it.
+4. **Fragile agent setup** — the Jenkins agent machine itself becomes a fragile, hand-tuned snowflake that's painful to rebuild or replace if it ever needs to be replicated (e.g., scaling to a second agent).
+
+Docker solves all four:
+
+- The **exact build environment** (JDK version, Android SDK, Ruby, Fastlane, gems, everything) is baked into the image once.
+- Jenkins doesn't need any of those tools installed on the host — it just needs Docker itself.
+- The **same image** can be pulled and run identically on any machine — a teammate's laptop, a second Jenkins agent, a fresh EC2 instance — with guaranteed identical behavior.
+- Debugging a failed build becomes much easier: a developer can `docker pull` and `docker run` the *same* image locally and reproduce the CI environment exactly.
+
+### How this plays out in your pipeline
+
+In the WorkIndia Android pipeline, the flow looks like this:
+
+1. Jenkins checks out the source code from Git onto the agent's workspace.
+2. `build.sh` pulls a prebuilt image (`android-fastlane-builder`) from a private AWS ECR registry — this image already has Ruby, Bundler, Fastlane, and the Android build toolchain installed inside it.
+3. `docker run` starts a **container** from that image, **bind-mounting** the checked-out source code (`-v $dir:/src`) into the container's filesystem.
+4. Inside the container, `bundle exec fastlane android ...` runs the actual Gradle/Fastlane build steps — completely isolated from whatever is or isn't installed on the Jenkins host itself.
+5. The container writes build outputs (APKs, mapping files, reports) back into the mounted `/src` directory, which is really just the host's workspace folder — so Jenkins can pick up the results after the container exits.
+6. `--rm` tells Docker to automatically delete the container (not the image) once it finishes, keeping things clean.
+
+### A caveat worth knowing: file ownership
+
+Because the container process inside `android-fastlane-builder` typically runs as **root** by default (unless explicitly told otherwise), any files it creates in the bind-mounted workspace end up **owned by root on the host machine** — even though the Jenkins agent itself runs as a regular, non-root user.
+
+This becomes a real problem later: Jenkins' own workspace cleanup step (which runs as its normal non-root user) can fail with "Operation not permitted" when it tries to delete or `chmod` those root-owned files. The fix is either:
+- Running the container with `-u $(id -u):$(id -g)` so it uses the host user's UID instead of root, or
+- Having the container `chown` the output files back to the host user before exiting
+
+Both approaches prevent orphaned root-owned files from blocking future builds.
+
+## Quick glossary
+
+| Term | Meaning |
+|---|---|
+| **Image** | An immutable, portable snapshot/blueprint of an environment — OS layer + installed tools + app code |
+| **Container** | A running (or stopped) instance of an image — an isolated process with its own filesystem view |
+| **Dockerfile** | The recipe/instructions used to build an image |
+| **Registry** | A storage/distribution service for images (e.g. Docker Hub, AWS ECR, GitHub Container Registry) |
+| **`docker pull`** | Downloads an image from a registry to the local machine |
+| **`docker run`** | Creates and starts a new container from a given image |
+| **`-v` (volume/bind mount)** | Shares a directory between the host machine and the container |
+| **`--rm`** | Automatically deletes the container (not the image) once it exits |
+
+## TL;DR
+
+- **Docker** packages an app with its full environment so it runs identically everywhere.
+- An **image** is the static blueprint; a **container** is a live, running instance of that blueprint.
+- Jenkins uses Docker so build environments (JDK, SDK, Ruby, Fastlane versions, etc.) stay **consistent, reproducible, and isolated** from whatever is or isn't installed on the Jenkins host itself — instead of hand-maintaining a fragile toolchain directly on the CI machine.
