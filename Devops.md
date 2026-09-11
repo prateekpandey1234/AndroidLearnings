@@ -766,3 +766,542 @@ Both approaches prevent orphaned root-owned files from blocking future builds.
 - **Docker** packages an app with its full environment so it runs identically everywhere.
 - An **image** is the static blueprint; a **container** is a live, running instance of that blueprint.
 - Jenkins uses Docker so build environments (JDK, SDK, Ruby, Fastlane versions, etc.) stay **consistent, reproducible, and isolated** from whatever is or isn't installed on the Jenkins host itself — instead of hand-maintaining a fragile toolchain directly on the CI machine.
+
+
+
+# Shipping a Mobile App — Release Runbook
+
+> Shipping the app is a series of pull requests. You never open an IDE, never touch the
+> Play Console, and never pick a version number. This is the whole process, start to
+> finish: what each branch does, where each branch is cut from, what the pipeline checks,
+> and how to manage a staged rollout.
+>
+> **This is an anonymised reference copy.** Repository names, Slack channels, version
+> numbers and commit hashes are invented. The process and the automation behaviour are real.
+
+| Anonymised name | What it is |
+|---|---|
+| `mobile-app` | The Android application repository |
+| `release-gitops` | Repository holding desired rollout state as YAML |
+| `shared-actions` | Shared reusable GitHub Actions |
+| `#app-dev-builds` / `#app-qa-builds` / `#app-prod-releases` | Slack channels for build announcements |
+| `#release-review` | Slack channel for the pre-merge review process |
+
+---
+
+## 1. What you need
+
+Just a GitHub account with access to two repositories:
+
+| Repository | What you do there |
+|---|---|
+| [`mobile-app`](https://github.com/example-org/mobile-app) | Merge pull requests. That's what ships the app. |
+| [`release-gitops`](https://github.com/example-org/release-gitops) | Adjust a live rollout — widen it or stop it. |
+
+Nothing else. No Android Studio, no SDK, no Play Console login, no signing keys, no local setup of any kind. The build servers fetch the credentials they need and clean up after themselves.
+
+---
+
+## 2. How it works, in three sentences
+
+**One.** Merging your pull request builds the app and puts it on the Google Play Store as a *draft* — it sits on Google's servers reaching nobody.
+
+**Two.** The same build then writes a small text file in a second repository saying which audience should get it, and what share of them.
+
+**Three.** That text file is what actually releases it. Nothing reaches a real person until that second step runs.
+
+> [!NOTE]
+> "It's on the Play Store" and "users have it" are two different statements. When someone tells you a build is up, ask which one they mean.
+
+---
+
+## 3. The chain at a glance
+
+Four branches, four outcomes. Merging into one is the only thing that starts anything — pushing a branch on its own does nothing.
+
+| Merge into | Builds | Uploaded to | Then released to | Who ends up with it |
+|---|---|---|---|---|
+| `develop` | develop flavor | internal | internal testing @ 100% | up to 100 people on the tester list — anyone at the company |
+| `uat` | production flavor | closed testing | closed testing @ 100% | invited QA testers |
+| `release/*` | production flavor, release build | open testing | open testing @ 100% **and** production @ 5% | beta users, plus 1 user in 20 |
+| `main` | *nothing is built* | — | production @ 100% | everyone else |
+
+The normal path runs top to bottom: `develop` → `uat` → `release/*` → `main`. The last row is the one to internalise — merging to `main` builds nothing new. It takes the release already sitting at 5% and widens it to everyone.
+
+```mermaid
+flowchart LR
+    subgraph AND ["mobile-app"]
+        A1["Merge a pull request<br/>develop / uat / release/* / main"]
+        A2["Build + sign<br/>the bundle"]
+    end
+
+    subgraph ACT ["shared-actions"]
+        C1["read-latest<br/>current version + rollout state"]
+        C2["register-latest<br/>write desired state"]
+    end
+
+    subgraph GIT ["release-gitops"]
+        G1["values.yaml + tracks/*.yaml<br/>what we want"]
+        G3["Fastlane<br/>apply the rollout"]
+    end
+
+    PLAY(["Google Play"])
+
+    A1 --> C1
+    C1 -->|reads| G1
+    C1 --> A2
+    A2 -->|"upload as DRAFT<br/>reaches nobody"| PLAY
+    A2 --> C2
+    C2 -->|"writes + pushes"| G1
+    G1 -->|"triggers a second workflow"| G3
+    G3 -->|"release to N% of users"| PLAY
+```
+
+The last two arrows — `values.yaml + tracks/*.yaml` → **Fastlane** → **Google Play** — are a **second, separate workflow**. It runs in `release-gitops`, not in the repo you merged into, and it never appears as a check on your pull request. Merging your PR is what gets the build made and handed over; the Slack message a few minutes later is what tells you Play has actually been updated.
+
+### Where results are announced
+
+Each track reports to its own Slack channel, so you only see traffic for the thing you merged:
+
+| Track | Channel |
+|---|---|
+| `develop` | `#app-dev-builds` |
+| `uat` | `#app-qa-builds` |
+| `release/*` and `main` | `#app-prod-releases` |
+
+---
+
+## 4. Where each branch comes from
+
+Before any of the procedures below, here is the whole branching model on one screen. If you remember one thing, remember the **Cut from** column — it's the step people miss.
+
+| Branch | Cut from | Open a PR into | What that merge triggers |
+|---|---|---|---|
+| your feature branch | `develop` | `develop` | internal build |
+| `bugfix/<issue>` | `uat` | that round's `hotfix/DDMMYY_N` | nothing — the hotfix branch is a staging area |
+| `hotfix/DDMMYY_N` | `uat` | `uat` | closed-testing build |
+| `release/DD-MM-YY` | `main` | — *(you open a PR **from `uat`** into it)* | open testing @ 100% + production @ 5% |
+| `release/DD-MM-YY` | — | `main` | production @ 100%, nothing new is built |
+
+```mermaid
+flowchart TD
+    F["your feature branch"] -->|"PR"| DEV["develop"]
+    DEV -->|"PR"| UAT["uat"]
+    DEV -.->|"cut from"| F
+
+    UAT -.->|"cut from"| BF["bugfix/issue"]
+    UAT -.->|"cut from"| HF["hotfix/DDMMYY_N"]
+    BF -->|"PR"| HF
+    HF -->|"PR"| UAT
+
+    MAIN["main"] -.->|"cut from"| REL["release/DD-MM-YY"]
+    UAT -->|"PR - this is what builds"| REL
+    REL -->|"PR - widens 5% to 100%"| MAIN
+```
+
+Solid arrows are pull requests. Dotted arrows show where a branch is **cut from** — creating a branch never builds anything on its own, so a dotted arrow is never a release.
+
+Two things worth reading twice:
+
+- **`release/DD-MM-YY` is cut from `main`, not from `uat`.** It starts at exactly what is live in production. The regression-tested changes arrive separately, through a PR from `uat`.
+- **Cutting the release branch triggers nothing.** CD fires on a *merged pull request*, so the `uat` → `release/DD-MM-YY` merge is what produces the build.
+
+---
+
+## 5. What the pipeline checks
+
+Two repositories, two sets of gates. Nothing merges past a red check, so it's worth knowing which applies to what you're doing.
+
+### On your Android pull request
+
+| Check | Runs on PRs into | Passes when |
+|---|---|---|
+| **Unit Test Gate** | `develop`, `uat`, `release/*` | The unit test suite passes. |
+| **Android Production Sanity** | `develop`, `uat`, `release/*`, `main` | An automated review of your diff doesn't come back *Do Not Deploy*. A *Needs Fixes* verdict posts a change request on the PR instead of failing outright. |
+| **Bet Enforcement Check** | `develop` only | The PR is linked to a tracked Bet via the **Development** section in the PR sidebar. |
+| **PR Template Select** | any PR, on open | Not a gate — it fills in the right checklist for the branch you're targeting. |
+
+Two gaps worth knowing: **Unit Test Gate doesn't run on PRs into `main`**, and **Bet Enforcement only runs on `develop`**. The Maestro end-to-end suite is manual — it never runs as a PR check.
+
+### After you merge
+
+CD takes over. One gate can stop it, and only on the release track:
+
+> **`release/*` only** — if production is already mid-rollout (1–99%), the merge fails with
+> `Production applied rollout is N%. Halt (0) or cd.main (100%) before the next release.`
+
+Finish the in-flight rollout (merge to `main`) or stop it (set `0`), then merge again.
+
+### On a rollout change in `release-gitops`
+
+Editing a track file runs **CI - Main**, which validates:
+
+- the file against its schema — `rollout` is an integer 0–100, all required fields present
+- the **active-rollout guard** — you can't change `versionCode` or `versionName` on a track that is currently between 1% and 99%
+
+### Rules applied at rollout time
+
+These are enforced when the change reaches Play, **not** in CI — so a pull request that breaks one goes green and then fails after merging. Worth knowing before you edit:
+
+- Raise the percentage, or set `0`. You cannot step **down** to a lower non-zero value — set `0` to stop instead.
+- A release already at 100% is finished. It can't be reduced or halted.
+- `internal-testing` accepts only `0` or `100`.
+- A track's `versionCode` can't be ahead of `latest` — assign a build that has actually been uploaded.
+
+---
+
+## 6. Reading a rollout message
+
+Every release — automatic or manual — announces itself in this format:
+
+```
+🚀 MobileApp — Production 4.2.0 (512)
+• Status: Live at 6%
+• Commit: a1b2c3d
+• When: Sep 3, 2026 4:17 PM UTC
+```
+
+| Part | What it tells you |
+|---|---|
+| `MobileApp — Production` | The app, and which Play channel this message is about. |
+| `4.2.0 (512)` | **The build.** The number in brackets is the `versionCode` — the value Play treats as the real identity. Trust it over the display string beside it. |
+| `Status` | What the release is doing and how far it reaches, in one phrase. `Live at 6%` means a staged rollout currently serving 6% of users on that channel. |
+| `Commit` | Short SHA of the merge commit that produced the build. Open it at `github.com/example-org/mobile-app/commit/a1b2c3d`. |
+| `When` | Timestamp, in UTC. |
+
+Read the **Status** line together with the version. A message where the version hasn't changed but the status has means the same build was widened or stopped — not that a new build shipped.
+
+Each message is a single event, not a status board. A track that moved 5% → 20% → 50% produces three messages and the channel keeps all of them. For the *current* state, read [`applied.json`](https://github.com/example-org/release-gitops/blob/main/apps/mobile/applied.json) — that file is what the pipeline itself treats as truth.
+
+---
+
+## 7. Day-to-day testing — merge into `develop`
+
+The fastest loop — your change is on a teammate's phone within minutes, with no Google review in the way.
+
+**`develop` is a stable branch, not a scratch branch.** Everything on it is a candidate for the next release train. You merge here *after* you've proven your change works, not to find out whether it does.
+
+### What gets tested here
+
+`develop` is where a change is actually exercised before it goes anywhere near real users. Four kinds of checking happen on this build:
+
+| | What it covers |
+|---|---|
+| **Feature testing** | Does the new thing work as specified? |
+| **Bug testing** | Does the fix hold, and did it break anything nearby? |
+| **Events testing** | Are analytics events firing, with the right names and payloads? |
+| **Design QA** | Does it match the design — spacing, states, copy, edge cases on real screen sizes? |
+
+That's why the tester list isn't just engineers. **Anyone at the company can be on it** — QA, product, design, data, or whoever needs to see the change on a real device. Play caps internal testing at **100 people**.
+
+### Test it yourself first
+
+`develop` is not where you discover whether your change works. That's settled before it gets there.
+
+- **Test on a release build with R8 enabled**, not a debug build. R8 shrinks and obfuscates the code, and every build from here on uses it — so a release build behaves very close to production. Anything that only breaks under R8 (reflection, serialisation, a missing keep rule) will never show up on a debug build.
+- **Test regressively**, not just the happy path of your own feature. Cover what your change touches and what sits next to it.
+- **This applies to partial features too.** Something half-built behind a flag still has to be shown not to affect anything else.
+
+Only once that's done does the change move to `develop`.
+
+### Release Review
+
+**Every change merging into `develop` needs Release Review approval.** Submit the form in `#release-review` and get the panel's sign-off before you merge.
+
+What to prepare beforehand — peer reviews, the production sanity report, the release checklist — is covered in your organisation\'s release review process doc.
+
+> [!WARNING]
+> **This build always points at the develop backend, never production.** That's fixed in the build itself, not a setting you can toggle. So anything you see here — data, account state, payments, notifications — is develop data. Never treat behaviour on this build as evidence of what production does, and never use it to check a production incident.
+
+### Before you merge
+
+- [ ] You've tested it yourself on a **release build with R8**, including the areas around the change.
+- [ ] **Release Review approved** — form submitted in `#release-review`, panel signed off.
+- [ ] Your PR is reviewed and approved, as normal.
+- [ ] You're merging into `develop`, not a `release/*` branch.
+- [ ] Whoever needs to try it — QA, PM, design, data — is on the tester list. Internal builds reach nobody else.
+
+### What happens
+
+| You | The pipeline |
+|---|---|
+| Click **Merge**. Nothing else. | Computes a version like `4.2.1.develop.030926.a1b2c3d` — release train, track, date (IST), and the merge commit. |
+| | Builds and signs the bundle. |
+| | Uploads it to Play's internal channel as a draft. |
+| | Sets internal testing to 100%. |
+| | Posts to `#app-dev-builds`. |
+
+### How to verify
+
+| Check | Where |
+|---|---|
+| Timing | **15–20 minutes** from merge to the Slack message. Most of that is the build. |
+| Build succeeded | Your merged PR's workflow goes green — the build was made and handed over. |
+| Release landed | The message in `#app-dev-builds`, usually a few minutes later. |
+| Reach | The tester list only — up to 100 people, from any team. No public user can reach this build. |
+| Google review | None at this level. That's why it's fast. |
+
+> [!TIP]
+> Every merge to `develop` produces a new build and ships it. Five merges this morning means five builds, and testers will see repeated update prompts. That's the design working, not a fault.
+
+---
+
+## 8. Regression testing — merge into `uat`
+
+The same code, built with production settings instead of developer ones, so QA tests something that behaves like the real thing.
+
+### What gets tested here
+
+`uat` is deliberately narrower than `develop`. The question here isn't "does the new thing work" — that was answered on `develop`. It's **"did we break anything that used to work."**
+
+| | What it covers |
+|---|---|
+| **Regression testing** | A full pass over the release candidate before it goes to real users |
+| **Hotfix regression** | The same pass scoped to an urgent fix and the areas it touches |
+
+Feature, events, and design checks belong on `develop`. If something reaches `uat` without having been through that, it's arriving too late.
+
+### Hotfixes
+
+A hotfix branch carries fixes that must reach `uat` without going through `develop` — a bug already live in **production**, or one QA finds during a regression pass on the release candidate.
+
+Every branch involved is cut from `uat`: each fix gets its own `bugfix/<issue>` branch, those merge into the round's `hotfix/DDMMYY_N` branch, and that one branch merges into `uat`. **`develop` is never patched** — it stays free for the next release train.
+
+**Name the branch `hotfix/DDMMYY_N`** — the date, then the round number. The first round of fixes is `hotfix/030926_1`, a later round `hotfix/030926_2`, and so on.
+
+#### When to open one
+
+When a fix has to reach `uat` without passing through `develop`. That covers a bug already live in production, and a bug QA finds while regression-testing the release candidate — **both use this same path.** The name says "hotfix", but the test isn't urgency, it's whether the fix needs to skip `develop`.
+
+#### How to open one
+
+**Cut it from `uat`.** On GitHub: open the branch dropdown, type `hotfix/030926_1`, and pick **Create branch `hotfix/030926_1` from `uat`** — the "from" part of that button is what people miss, since the dropdown defaults to whichever branch you were viewing.
+
+From a terminal, if you prefer:
+
+```bash
+git checkout uat && git pull && git checkout -b hotfix/030926_1
+```
+
+#### The shape of a round
+
+| Step | What happens | Branch |
+|---|---|---|
+| **1** | Collect the full list of issues for the round — from production, or from a regression pass. | — |
+| **2** | Cut the hotfix branch **from `uat`**. | `hotfix/030926_1` |
+| **3** | Each fix gets its own branch, also **cut from `uat`**, and opens a PR **into the hotfix branch** — not into `uat`. | `bugfix/<issue>` → `hotfix/030926_1` |
+| **4** | Once every fix is merged in, open one PR from the hotfix branch **into `uat`**. One merge, one build. | `hotfix/030926_1` → `uat` |
+| **5** | QA re-tests. Anything still broken becomes the next round. | `hotfix/030926_2` |
+
+**Why step 3 goes through the hotfix branch rather than straight into `uat`:** the hotfix branch is a **staging area**, nothing more. Merging into it builds nothing. Collecting the whole round there means `uat` receives *one* merge and produces *one* build, instead of one of each per fix.
+
+Hotfix branches merge **directly into `uat`**. They don't route through `develop` first — a fix for a release candidate shouldn't drag in whatever else has landed on `develop` since it was cut.
+
+> [!WARNING]
+> **Cut the branch only once the round is complete**
+>
+> **Wait until every issue in the round has been identified before opening the hotfix branch.** Every merge into `uat` produces its own build, and every build then waits 2–12 hours on Google review.
+>
+> Merging fixes one at a time means QA spends the day chasing builds instead of testing, and it stops being obvious which build carries which fix. Batching the round into one merge gives QA a single build with a clear scope: *these are the fixes, re-test these areas.*
+
+> [!NOTE]
+> A fix living only on `uat` is missing from `develop`, so the next release train would ship without it. Get it back onto `develop` once the hotfix has gone out — after the fact, not by patching `develop` mid-cycle.
+
+> [!CAUTION]
+> **Build the night before**
+>
+> Closed testing goes through **Google review**, and that takes **2–12 hours** — it is not under our control and cannot be rushed. The Slack message arrives long before testers can actually install anything.
+>
+> **Merge to `uat` the evening before regression is due to start.** Merging on the morning of a regression cycle means waiting most of the day for the build to become installable.
+
+### Before you merge
+
+- [ ] The change has already been through `develop` and survived — or, for a hotfix, it's on a complete `hotfix/DDMMYY_N` branch.
+- [ ] **It's the night before regression starts**, so Google review has time to clear.
+- [ ] QA knows it's coming and knows what to test.
+- [ ] Anything it depends on — a backend change, a feature flag, a config value — is already live in the environment QA will test against.
+- [ ] You've told QA which version string to expect, so they can confirm they're on the right build.
+
+### What happens
+
+| You | The pipeline |
+|---|---|
+| Open a PR from `develop` into `uat`, get it approved, merge it. Share the version string once Slack announces it. | Computes a version like `4.2.1.uat.030926.a1b2c3d` — same shape as develop, with a `.uat.` label. |
+| | Builds the production flavor, so behaviour matches what ships. |
+| | Uploads it to Play's closed testing channel as a draft. |
+| | Sets closed testing to 100%. |
+| | Posts to `#app-qa-builds`. |
+
+### How to verify
+
+| Check | Where |
+|---|---|
+| Timing — build | **15–20 minutes** from merge to the Slack message. |
+| Timing — installable | **A further 2–12 hours** while Google reviews the closed-testing release. The Slack message does *not* mean testers can install yet. |
+| Version | Named in `#app-qa-builds`. |
+| Delivery path | QA installs through the Play Store like any user — this exercises the real delivery path, not a sideloaded file. |
+| Reach | The invited closed-testing list. Still no public users. |
+
+If QA finds a bug during regression, **don't fix it on `develop`.** Fix it locally on a bugfix branch and send it through the hotfix path above — into that round's `hotfix/DDMMYY_N` branch, then into `uat`. `develop` stays free for the next release train.
+
+---
+
+## 9. Production release — merge into `release/*`, then `main`
+
+Two merges, deliberately separated. The first reaches a small slice of real users; the second reaches everyone. The gap between them is where you watch for trouble.
+
+> [!IMPORTANT]
+> **Release branch naming**
+>
+> **Cut it from `main`**, and name it `release/DD-MM-YY` — the date you cut it. For example, `release/03-09-26`.
+>
+> Cutting from `main` means the branch starts at exactly what is live in production. The regression-tested changes arrive separately, in a PR from `uat`.
+>
+> The pipeline triggers on anything under `release/`, so a misnamed branch still builds. Sticking to the convention is what keeps the branch list readable and makes it obvious which release a branch belongs to.
+
+### Before you merge to a release branch
+
+- [ ] QA has signed off on the `uat` build — that's the branch the release PR comes from.
+- [ ] You've cut `release/DD-MM-YY` **from `main`**, not from `uat` or `develop`.
+- [ ] **No production rollout is currently in progress.** If one is, the merge is rejected — finish or stop it first.
+- [ ] Backend changes this build depends on are already live in production.
+- [ ] Someone is available to watch crash rates afterwards. A staged rollout nobody monitors is just a slow full release.
+
+### Part one — merge into `release/*`
+
+| You | The pipeline |
+|---|---|
+| **1.** Cut `release/DD-MM-YY` (e.g. `release/03-09-26`) **from `main`**. This on its own builds nothing. | Checks production isn't mid-rollout and stops with a clear error if it is. |
+| **2.** Open a PR **from `uat`** into that release branch and merge it once approved. **This merge is what triggers the build.** | Bakes a clean version number — no date, no commit, just `4.3.0`. This is what users see. |
+| **3.** Then **stop and watch** — crash rate, key funnels, support tickets — for at least a few hours, ideally a day. | Builds the release bundle and uploads it to open testing as a draft. |
+| | Releases open testing fully, and opens production at **5%** using that same build. |
+
+### Part two — merge into `main`
+
+| You | The pipeline |
+|---|---|
+| Once the numbers look healthy, open a PR **from the `release/DD-MM-YY` branch** into `main` and merge it. | Moves production to **100%**. No new build — the same one, widened. |
+
+### How to verify
+
+| Check | Where |
+|---|---|
+| Timing — build | **15–20 minutes** from the `release/*` merge to the Slack message. |
+| Timing — reaching users | **Hours more** while Google reviews the release. Don't promise a launch time to the hour. |
+| Version and percentage | Named in `#app-prod-releases`. |
+| The 5% gap | Deliberate. One user in twenty gets the new build; the other nineteen stay on the previous one, entirely unaffected. |
+| Merging to `main` | Builds and uploads nothing — it only widens what's already there, so it takes a few minutes rather than 15–20. Any merged PR to `main` triggers it, including a docs change. |
+
+---
+
+## 10. Managing a live rollout
+
+Opening production at 5% and completing it to 100% are automatic, driven by the two merges above. Everything in between — widening to 20%, or stopping early — is a change you make directly in [`release-gitops`](https://github.com/example-org/release-gitops).
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    [*] --> Draft: uploaded by the build
+
+    Draft: Draft
+    Draft: rollout 0 · nobody · not reviewed
+
+    Rolling: Rolling out
+    Rolling: rollout 1-99 · that share of users
+
+    Halted: Stopped
+    Halted: rollout 0 after being live
+
+    Done: Fully released
+    Done: rollout 100 · everyone
+
+    Draft --> Rolling: release/* merge opens it
+    Rolling --> Rolling: widen 5 -> 20 -> 50
+    Rolling --> Halted: stop it
+    Halted --> Rolling: resume
+    Rolling --> Done: main merge
+    Done --> [*]
+```
+
+### The rules
+
+- **Raise the number to widen, or set `0` to stop.** Those are the two moves.
+- **You cannot step down to a lower non-zero value.** Going 20% → 5% is rejected; set `0` to stop instead.
+- **A release at 100% is finished.** To change what users have, ship a new build.
+- **`internal-testing` is `0` or `100` only** — Play doesn't support staged rollout on the internal channel.
+- **Always change rollout here, never in the Play Console.** This repository is the source of truth; a change made directly in Play would be invisible to it.
+
+### How to make the change
+
+**1.** Open the track file in GitHub's editor:
+
+[Edit `apps/mobile/tracks/production.yaml`](https://github.com/example-org/release-gitops/edit/main/apps/mobile/tracks/production.yaml)
+
+**2.** Change only the `rollout:` line. Leave everything else exactly as it is.
+
+**3.** Scroll to **Commit changes**, choose **Create a new branch for this commit and start a pull request**, and click **Propose changes**.
+
+**4.** GitHub opens a new pull request, pre-filled with the repository's checklist. Work through it, get a review, and merge.
+
+Merging is what calls Play. Watch `#app-prod-releases` for the result.
+
+Swap `production` for `internal-testing`, `closed-testing`, or `open-testing` in that URL to adjust another channel — though the three testing channels are held at 100% by the pipeline, so you'd rarely need to.
+
+---
+
+## 11. Troubleshooting
+
+Most of these aren't your change. Learn to tell them apart before you start reading code.
+
+### `Production applied rollout is 20%. Halt (0) or cd.main (100%) before the next release.`
+
+Working as designed — a previous release is still partway through reaching users, and the system won't stack a second one on top.
+
+**Do:** find out who owns the in-progress release. Either complete it (merge to `main`) or stop it (set `0`, see [section 9](#10-managing-a-live-rollout)). Then merge yours again.
+
+### `Version code NNN has already been used`
+
+All tracks count up from one shared version number. Two merges on *different* branches finishing at the same moment can both claim it. Two merges into the same branch are queued and safe.
+
+**Do:** re-run the failed workflow. It re-reads the version number and takes the next one.
+
+### The push to `release-gitops` failed
+
+Same cause — two pipelines wrote at once and one lost the race.
+
+**Do:** re-run the failed workflow.
+
+### The workflow failed and you can't find a Slack message
+
+There is almost always one. Track-level failures post to that track's own channel, exactly like successes do. Failures earlier than that — dependency install, or writing the record back — post to `#app-prod-releases` instead.
+
+**Do:** check the track's channel first, then `#app-prod-releases`. Both messages link the workflow run, and the reason is in that log.
+
+### Nothing happened after merging
+
+**Do:** confirm you merged into a branch with a pipeline attached — `develop`, `uat`, a `release/*` branch, or `main`. Anything else is a no-op by design. Also confirm the PR was genuinely *merged*, not just closed.
+
+### The build itself failed
+
+This one probably *is* your change — a compile error, a failing test, a dependency problem.
+
+**Do:** read the workflow log like any other build failure. You don't need Android knowledge to read a stack trace.
+
+---
+
+## 12. Glossary
+
+| Term | Meaning |
+|---|---|
+| **AAB / bundle** | The packaged app that gets uploaded. Google turns it into per-device downloads. |
+| **versionCode** | An integer — the real identity of a build. Always increases, never reused. |
+| **versionName** | The display string like `4.3.0`. What users see; nothing depends on it. |
+| **Track / channel** | An audience on the Play Store. The same app can run a different version on each at the same time. |
+| **internal / alpha / beta / production** | Google's names for internal, closed, open, and production. You'll see them in logs and Slack. |
+| **Draft** | Uploaded to Google, released to nobody, not submitted for review. Every build starts here. |
+| **Staged rollout** | Releasing to a percentage of users so problems hit a slice rather than everyone. |
+| **Flavor** | Which app you're building — `develop` and `production` differ in app ID and which backend they talk to. This is the real difference between tracks. |
+| **Build type** | How it's compiled. Both `analytics` and `Release` are optimised and release-signed; `analytics` adds a network inspector for debugging. |
+| **Signing** | Stamping the build so Google knows it's genuinely ours. Fully automated — you never touch a key. |
+| **Fastlane** | The tool the build servers use to talk to Google Play. You won't interact with it directly. |
