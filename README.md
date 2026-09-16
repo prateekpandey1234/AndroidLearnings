@@ -1685,6 +1685,47 @@ remember to make a interface repo which is then used by 2 different repositories
     will do nothing... There you can save this event so you can later check that this super.method was called
     with expected arguments if necessary
 
+   i. `coEvery` vs `every`
+   
+      Both are mockk's way of stubbing — "when this method is called, return this value." The `co` prefix is for **suspend functions**. Since `FieldsSearchRepository.searchFields(...)` is `suspend`, you can't stub it with plain `every` — that only works on regular (blocking) function calls. `coEvery` knows how to intercept a suspend call inside a coroutine context.
+      
+      ```kotlin
+      coEvery { certRepository.searchFields(any(), any(), any()) } returns Resource.Success(suggestions)
+      ```
+      Reads as: "whenever `searchFields` is called with any args, hand back this canned `Resource.Success`." The real repository never runs — no network call happens.
+      
+      `trackBottomsheetOpened` isn't suspend, so it's stubbed with plain `every` (or in our case just left as a relaxed mock, which auto-returns `Unit` for everything without you specifying).
+      
+      ## `coVerify` vs `verify`
+      
+      Same relationship. Both ask "was this method actually called (with these args)?" — but `verify` is for regular calls, `coVerify` is for suspend calls.
+      
+      ```kotlin
+      coVerify { certRepository.searchFields(any(), eq(""), any()) }
+      ```
+      This isn't about the *return value* — it's about whether the use case actually **invoked** the repository with an empty search term. It fails if that exact call never happened.
+      
+      ## How this differs from `assertEquals`/`assertTrue`
+      
+      They check two different things:
+      
+      - **`coEvery`/`every`** — happens *before* the code under test runs. It's setup: "make the fake dependency behave this way."
+      - **`coVerify`/`verify`** — happens *after*. It's about **interaction**: did my code call the collaborator correctly (right method, right arguments, right number of times)?
+      - **`assertEquals`/`assertTrue`** — also happens *after*, but it's about **state/output**: is the *value* my code produced correct?
+      
+      Concretely, in the null-term test:
+      ```kotlin
+      coEvery { certRepository.searchFields(any(), any(), any()) } returns Resource.Success(suggestions)  // setup: fake the dependency
+      
+      val result = certificationFieldUseCase.fetchSearch(term = null)  // exercise the real code
+      
+      verify { certAnalytics.trackBottomsheetOpened(any()) }              // interaction check: did it fire the analytics event?
+      coVerify { certRepository.searchFields(any(), eq(""), any()) }      // interaction check: did it call the repo with ""?
+      assertEquals(suggestions, result.data)                              // state check: is the returned value correct?
+      ```
+      
+      You need `assertEquals` because `coEvery` only controls what the *mock* returns — it doesn't prove the use case correctly *passes that through* to its own return value. And you need `coVerify` because `assertEquals` alone can't tell you *whether* or *how* a dependency was called — a passthrough could accidentally pass the wrong term, or skip calling analytics entirely, and a pure return-value assertion wouldn't catch that.
+
 3. Instrumented Testing
 
    a. that instrumentation testing is integration testing with the ability to control the life cycle and the events (onStart, onCreate etc) of the app.
